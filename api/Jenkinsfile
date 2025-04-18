@@ -5,8 +5,8 @@ pipeline {
          }
      }
     environment {
-        SONARQUBE_URL = 'http://54.67.42.46:9000'  // Your SonarQube URL
-        SONARQUBE_TOKEN = credentials('sonarqube')  // Replace with your Jenkins credential ID
+        SONARQUBE_URL = 'http://54.153.71.48:9000'  // Your SonarQube URL
+        SONARQUBE_TOKEN = credentials('sonar')  // Replace with your Jenkins credential ID
     }
     stages {
         stage('Checkout') {
@@ -23,7 +23,7 @@ pipeline {
                     withSonarQubeEnv('sonarqube') {  // Name of SonarQube instance in Jenkins configuration
                         sh """
                         ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=lmsfe \
+                        -Dsonar.projectKey=lmsbe \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=${SONARQUBE_URL} \
                         -Dsonar.login=${SONARQUBE_TOKEN}
