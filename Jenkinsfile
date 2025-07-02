@@ -18,39 +18,28 @@ pipeline {
             }
         }
 
-        stage('Clean Up Old Containers') {
-            steps {
-                echo 'Stopping and removing old containers if they exist...'
-                sh '''
-                    docker rm -f frontend || true
-                    docker rm -f backend || true
-                    docker rm -f postgres_container || true
-                '''
-            }
-        }
-
         stage('Start PostgreSQL') {
             steps {
-                echo 'Starting PostgreSQL container...'
-                sh """
-                    docker run -d \
-                      --name $POSTGRES_CONTAINER \
-                      -e POSTGRES_USER=$POSTGRES_USER \
-                      -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-                      -e POSTGRES_DB=$POSTGRES_DB \
-                      -p 5432:5432 \
-                      postgres:15
-                """
-                sleep(time: 10, unit: 'SECONDS')
+                script {
+                    sh """
+                        docker rm -f $POSTGRES_CONTAINER || true
+                        docker run -d --name $POSTGRES_CONTAINER \
+                          -e POSTGRES_USER=$POSTGRES_USER \
+                          -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+                          -e POSTGRES_DB=$POSTGRES_DB \
+                          -p 5432:5432 postgres:15
+                    """
+                    sleep 10 // wait for DB to initialize
+                }
             }
         }
 
-        stage('Build Backend Image') {
+        stage('Build Backend') {
             steps {
                 dir('api') {
                     sh """
                         docker build -t $BACKEND_IMAGE \
-                          --build-arg DB_HOST=host.docker.internal \
+                          --build-arg DB_HOST=db \
                           --build-arg DB_USER=$POSTGRES_USER \
                           --build-arg DB_PASSWORD=$POSTGRES_PASSWORD \
                           --build-arg DB_NAME=$POSTGRES_DB .
@@ -59,29 +48,10 @@ pipeline {
             }
         }
 
-        stage('Build Frontend Image') {
-            steps {
-                dir('webapp') {
-                    sh "docker build -t $FRONTEND_IMAGE ."
-                }
-            }
-        }
-
-        stage('Push Images to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_CREDS", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push $BACKEND_IMAGE
-                        docker push $FRONTEND_IMAGE
-                    """
-                }
-            }
-        }
-
-        stage('Run Backend Container') {
+        stage('Run Backend') {
             steps {
                 sh """
+                    docker rm -f backend || true
                     docker run -d --name backend \
                       --link $POSTGRES_CONTAINER:db \
                       -e DB_HOST=db \
@@ -93,9 +63,18 @@ pipeline {
             }
         }
 
-        stage('Run Frontend Container') {
+        stage('Build Frontend') {
+            steps {
+                dir('webapp') {
+                    sh "docker build -t $FRONTEND_IMAGE ."
+                }
+            }
+        }
+
+        stage('Run Frontend') {
             steps {
                 sh """
+                    docker rm -f frontend || true
                     docker run -d --name frontend \
                       -p 80:80 $FRONTEND_IMAGE
                 """
