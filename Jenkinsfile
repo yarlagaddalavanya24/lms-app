@@ -2,25 +2,44 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Build LMS') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/yarlagaddalavanya24/lms-app.git'
+                echo 'LMS Build Started'
+                sh 'cd webapp && npm install && npm run build'
+                echo 'LMS Build Completed'
             }
         }
-        stage('Install Dependencies') {
+
+        stage('Publish LMS') {
             steps {
-                sh 'npm install'
+                script {
+                    def packageJson = readJSON file: 'webapp/package.json'
+                    def packageJSONVersion = packageJson.version
+                    echo "${packageJSONVersion}"
+                    sh "zip webapp/lms-${packageJSONVersion}.zip -r webapp/dist"
+                    sh "curl -v -u admin:lms12345 --upload-file webapp/lms-${packageJSONVersion}.zip http://35.90.115.123:8081/repository/lms/"
+                }
             }
         }
-        stage('Run Tests') {
+
+        stage('Deploy LMS') {
             steps {
-                sh 'npm test -- --watchAll=false'
+                script {
+                    def packageJson = readJSON file: 'webapp/package.json'
+                    def packageJSONVersion = packageJson.version
+                    echo "${packageJSONVersion}"
+                    sh "curl -u admin:lms12345 -X GET 'http://35.90.115.123:8081/repository/lms/lms-${packageJSONVersion}.zip' --output lms-'${packageJSONVersion}'.zip"
+                    sh 'sudo rm -rf /var/www/html/*'
+                    sh "sudo unzip -o lms-'${packageJSONVersion}'.zip"
+                    sh "sudo cp -r webapp/dist/* /var/www/html"
+                }
             }
         }
-        stage('Build App') {
+
+        stage('Clean Up Workspace') {
             steps {
-                sh 'npm run build'
+                echo 'Cleaning Work Space'
+                cleanWs()
             }
         }
     }
