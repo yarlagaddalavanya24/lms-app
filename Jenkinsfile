@@ -2,37 +2,25 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                checkout scm
+                git 'https://github.com/your-user/your-lms-app.git'
             }
         }
-
-        stage('Build Docker Image') {
+        stage('Install dependencies') {
             steps {
-                sh '''
-                    cd api
-                    docker build -t lms-app .
-                '''
+                sh 'npm install'
             }
         }
-
-        stage('Stop Previous Container') {
+        stage('Run tests') {
             steps {
-                sh '''
-                    docker stop lms-container || true
-                    docker rm lms-container || true
-                '''
+                sh 'npm test -- --watchAll=false'
             }
         }
-
-        stage('Run New Container') {
+        stage('Build app') {
             steps {
-                sh '''
-                    docker run -d --name lms-container -p 3000:3000 lms-app
-                '''
+                sh 'npm run build'
             }
         }
     }
 }
-
