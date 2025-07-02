@@ -9,7 +9,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/yarlagaddalavanya24/lms-app.git'
+                git branch: 'main',
+                    url: 'https://github.com/yarlagaddalavanya24/lms-app.git'
             }
         }
         
