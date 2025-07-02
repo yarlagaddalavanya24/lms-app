@@ -1,7 +1,19 @@
 pipeline {
     agent any
 
+    environment {
+        // Nexus credentials - adjust if your Jenkins has credentials IDs
+        NEXUS_USERNAME = 'admin'
+        NEXUS_PASSWORD = 'lms12345'
+        NEXUS_URL      = 'http://35.90.115.123:8081/repository/lms'
+    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Build LMS') {
             steps {
@@ -20,21 +32,22 @@ pipeline {
                 script {
                     def packageJson = readJSON file: 'webapp/package.json'
                     def packageJSONVersion = packageJson.version
-                    echo "App version: ${packageJSONVersion}"
+                    echo "LMS Version: ${packageJSONVersion}"
 
-                    // Use Docker to run zip
+                    // Run ZIP in Docker so we don't depend on zip being installed on Jenkins node
                     sh """
                         docker run --rm \
-                          -v \$PWD:/workspace \
-                          -w /workspace \
-                          alpine \
-                          sh -c "apk add --no-cache zip && zip webapp/lms-${packageJSONVersion}.zip -r webapp/dist"
+                            -v \$PWD:/workspace \
+                            -w /workspace \
+                            alpine \
+                            sh -c "apk add --no-cache zip && zip -r webapp/lms-${packageJSONVersion}.zip webapp/dist"
                     """
 
+                    // Upload to Nexus
                     sh """
-                        curl -v -u admin:lms12345 \
+                        curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} \
                           --upload-file webapp/lms-${packageJSONVersion}.zip \
-                          http://35.90.115.123:8081/repository/lms/
+                          ${NEXUS_URL}/
                     """
                 }
             }
@@ -45,14 +58,15 @@ pipeline {
                 script {
                     def packageJson = readJSON file: 'webapp/package.json'
                     def packageJSONVersion = packageJson.version
-                    echo "Deploying LMS version: ${packageJSONVersion}"
 
+                    // Download artifact
                     sh """
-                        curl -u admin:lms12345 -X GET \
-                          'http://35.90.115.123:8081/repository/lms/lms-${packageJSONVersion}.zip' \
+                        curl -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} -X GET \
+                          '${NEXUS_URL}/lms-${packageJSONVersion}.zip' \
                           --output lms-${packageJSONVersion}.zip
                     """
 
+                    // Deploy to web server directory
                     sh """
                         sudo rm -rf /var/www/html/*
                         sudo unzip -o lms-${packageJSONVersion}.zip
@@ -64,7 +78,7 @@ pipeline {
 
         stage('Clean Up Workspace') {
             steps {
-                echo 'Cleaning Work Space'
+                echo 'Cleaning workspace...'
                 cleanWs()
             }
         }
