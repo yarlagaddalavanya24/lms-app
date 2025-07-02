@@ -1,26 +1,44 @@
 pipeline {
     agent any
 
+    environment {
+        // Optional: Define NODE_ENV if needed
+        NODE_ENV = 'production'
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-user/your-lms-app.git'
+                git url: 'https://github.com/yarlagaddalavanya24/lms-app.git'
             }
         }
-        stage('Install dependencies') {
+        
+        stage('Install Dependencies') {
             steps {
                 sh 'npm install'
             }
         }
-        stage('Run tests') {
+        
+        stage('Run Tests') {
             steps {
                 sh 'npm test -- --watchAll=false'
             }
         }
-        stage('Build app') {
+        
+        stage('Build App') {
             steps {
                 sh 'npm run build'
             }
         }
     }
+
+    post {
+        success {
+            echo "Pipeline completed successfully."
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
 }
