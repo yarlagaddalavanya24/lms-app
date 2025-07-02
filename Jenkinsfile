@@ -18,6 +18,17 @@ pipeline {
             }
         }
 
+        stage('Clean Up Old Containers') {
+            steps {
+                echo 'Stopping and removing old containers if they exist...'
+                sh '''
+                    docker rm -f frontend || true
+                    docker rm -f backend || true
+                    docker rm -f postgres_container || true
+                '''
+            }
+        }
+
         stage('Start PostgreSQL') {
             steps {
                 echo 'Starting PostgreSQL container...'
@@ -30,15 +41,7 @@ pipeline {
                       -p 5432:5432 \
                       postgres:15
                 """
-                sleep(time: 10, unit: 'SECONDS') // give DB time to initialize
-            }
-        }
-
-        stage('Build Frontend Image') {
-            steps {
-                dir('webapp') {
-                    sh "docker build -t $FRONTEND_IMAGE ."
-                }
+                sleep(time: 10, unit: 'SECONDS')
             }
         }
 
@@ -56,23 +59,47 @@ pipeline {
             }
         }
 
+        stage('Build Frontend Image') {
+            steps {
+                dir('webapp') {
+                    sh "docker build -t $FRONTEND_IMAGE ."
+                }
+            }
+        }
+
         stage('Push Images to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_CREDS", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $FRONTEND_IMAGE:latest
-                        docker push $BACKEND_IMAGE:latest
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push $BACKEND_IMAGE
+                        docker push $FRONTEND_IMAGE
                     """
                 }
             }
         }
-    }
 
-    post {
-        always {
-            echo 'Cleaning up...'
-            sh 'docker rm -f $POSTGRES_CONTAINER || true'
+        stage('Run Backend Container') {
+            steps {
+                sh """
+                    docker run -d --name backend \
+                      --link $POSTGRES_CONTAINER:db \
+                      -e DB_HOST=db \
+                      -e DB_USER=$POSTGRES_USER \
+                      -e DB_PASSWORD=$POSTGRES_PASSWORD \
+                      -e DB_NAME=$POSTGRES_DB \
+                      -p 3000:3000 $BACKEND_IMAGE
+                """
+            }
+        }
+
+        stage('Run Frontend Container') {
+            steps {
+                sh """
+                    docker run -d --name frontend \
+                      -p 80:80 $FRONTEND_IMAGE
+                """
+            }
         }
     }
 }
