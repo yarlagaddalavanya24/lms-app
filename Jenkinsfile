@@ -5,14 +5,6 @@ pipeline {
     BACKEND_IMAGE = 'lavanyayarlagadda24/api:latest'
     FRONTEND_IMAGE = 'lavanyayarlagadda24/webapp:latest'
   }
-
-  stages {
-    stage('Clone Repository') {
-      steps {
-        git 'https://github.com/yarlagaddalavanya24/lms-app.git'
-      }
-    }
-
     stage('Build Docker Images') {
       steps {
         script {
