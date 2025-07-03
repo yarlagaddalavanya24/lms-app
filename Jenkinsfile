@@ -1,60 +1,85 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    BACKEND_IMAGE = 'lavanyayarlagadda24/api:latest'
-    FRONTEND_IMAGE = 'lavanyayarlagadda24/webapp:latest'
-  }
+    environment {
+        DB_IMAGE = 'custom-postgres:latest'
+        DB_CONTAINER = 'postgres_container'
+        FRONTEND_IMAGE = 'lavanyayarlagadda24/webapp:latest'
+        BACKEND_IMAGE = 'lavanyayarlagadda24/api:latest'
+        FRONTEND_CONTAINER = 'frontend'
+        BACKEND_CONTAINER = 'backend'
+        NETWORK_NAME = 'lms-net'
+    }
 
-  stages {
-    stage('Pull Docker Images') {
-      steps {
-        script {
-          sh "docker pull $BACKEND_IMAGE"
-          sh "docker pull $FRONTEND_IMAGE"
+    stages {
+        stage('Build PostgreSQL Image') {
+            steps {
+                dir('postgres') {
+                    sh 'docker build -t $DB_IMAGE .'
+                }
+            }
         }
-      }
-    }
 
-    stage('Run Containers') {
-      steps {
-        script {
-          // Create Docker network if not exists
-          sh 'docker network create lms-net || true'
-
-          // Run PostgreSQL container
-          sh '''
-            docker run -d --name postgres_container \
-              --network lms-net \
-              -e POSTGRES_USER=myuser \
-              -e POSTGRES_PASSWORD=mypass \
-              -e POSTGRES_DB=mydb \
-              -p 5432:5432 postgres:15
-          '''
-
-          // Run Backend container
-          sh '''
-            docker run -d --name backend \
-              --network lms-net \
-              -e DATABASE_URL=postgresql://myuser:mypass@postgres_container:5432/mydb \
-              -p 3000:3000 $BACKEND_IMAGE
-          '''
-
-          // Run Frontend container
-          sh '''
-            docker run -d --name frontend \
-              --network lms-net \
-              -p 80:80 $FRONTEND_IMAGE
-          '''
+        stage('Cleanup Old Containers') {
+            steps {
+                sh '''
+                docker rm -f $DB_CONTAINER || true
+                docker rm -f $FRONTEND_CONTAINER || true
+                docker rm -f $BACKEND_CONTAINER || true
+                '''
+            }
         }
-      }
-    }
-  }
 
-  post {
-    always {
-      echo "Pipeline completed"
+        stage('Create Docker Network') {
+            steps {
+                sh 'docker network create $NETWORK_NAME || true'
+            }
+        }
+
+        stage('Run PostgreSQL') {
+            steps {
+                sh '''
+                docker run -d --name $DB_CONTAINER \
+                    --network $NETWORK_NAME \
+                    -e POSTGRES_USER=myuser \
+                    -e POSTGRES_PASSWORD=mypass \
+                    -e POSTGRES_DB=mydb \
+                    -p 5432:5432 \
+                    $DB_IMAGE
+                '''
+            }
+        }
+
+        stage('Run Backend') {
+            steps {
+                sh '''
+                docker run -d --name $BACKEND_CONTAINER \
+                    --network $NETWORK_NAME \
+                    -e DATABASE_URL=postgresql://myuser:mypass@$DB_CONTAINER:5432/mydb \
+                    -e MODE=production \
+                    -e PORT=3000 \
+                    -p 3000:3000 \
+                    $BACKEND_IMAGE
+                '''
+            }
+        }
+
+        stage('Run Frontend') {
+            steps {
+                sh '''
+                docker run -d --name $FRONTEND_CONTAINER \
+                    --network $NETWORK_NAME \
+                    -p 80:80 \
+                    $FRONTEND_IMAGE
+                '''
+            }
+        }
     }
-  }
+
+    post {
+        always {
+            echo "🚀 LMS deployment complete! Visit: http://<your-server-ip>"
+        }
+    }
 }
 
