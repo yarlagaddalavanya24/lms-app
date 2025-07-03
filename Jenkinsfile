@@ -1,85 +1,57 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        DOCKER_HUB_CREDS = 'dockerhub-creds'
-        FRONTEND_IMAGE = 'lavanyayarlagadda24/webapp'
-        BACKEND_IMAGE = 'lavanyayarlagadda24/api'
-        POSTGRES_CONTAINER = 'postgres_container'
-        POSTGRES_USER = 'myuser'
-        POSTGRES_PASSWORD = 'mypass'
-        POSTGRES_DB = 'mydb'
+  environment {
+    BACKEND_IMAGE = 'lavanyayarlagadda24/api:latest'
+    FRONTEND_IMAGE = 'lavanyayarlagadda24/webapp:latest'
+  }
+
+  stages {
+    stage('Clone Repository') {
+      steps {
+        git 'https://github.com/yarlagaddalavanya24/lms-app.git'
+      }
     }
 
-    stages {
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
+    stage('Build Docker Images') {
+      steps {
+        script {
+          sh 'docker build -t $BACKEND_IMAGE ./backend'
+          sh 'docker build -t $FRONTEND_IMAGE ./frontend'
         }
-
-        stage('Start PostgreSQL') {
-            steps {
-                script {
-                    sh """
-                        docker rm -f $POSTGRES_CONTAINER || true
-                        docker run -d --name $POSTGRES_CONTAINER \
-                          -e POSTGRES_USER=$POSTGRES_USER \
-                          -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-                          -e POSTGRES_DB=$POSTGRES_DB \
-                          -p 5432:5432 postgres:15
-                    """
-                    sleep 10 // wait for DB to initialize
-                }
-            }
-        }
-
-        stage('Build Backend') {
-            steps {
-                dir('api') {
-                    sh """
-                        docker build -t $BACKEND_IMAGE \
-                          --build-arg DB_HOST=db \
-                          --build-arg DB_USER=$POSTGRES_USER \
-                          --build-arg DB_PASSWORD=$POSTGRES_PASSWORD \
-                          --build-arg DB_NAME=$POSTGRES_DB .
-                    """
-                }
-            }
-        }
-
-        stage('Run Backend') {
-            steps {
-                sh """
-                    docker rm -f backend || true
-                    docker run -d --name backend \
-                      --link $POSTGRES_CONTAINER:db \
-                      -e DB_HOST=db \
-                      -e DB_USER=$POSTGRES_USER \
-                      -e DB_PASSWORD=$POSTGRES_PASSWORD \
-                      -e DB_NAME=$POSTGRES_DB \
-                      -p 3000:3000 $BACKEND_IMAGE
-                """
-            }
-        }
-
-        stage('Build Frontend') {
-            steps {
-                dir('webapp') {
-                    sh "docker build -t $FRONTEND_IMAGE ."
-                }
-            }
-        }
-
-        stage('Run Frontend') {
-            steps {
-                sh """
-                    docker rm -f frontend || true
-                    docker run -d --name frontend \
-                      -p 80:80 $FRONTEND_IMAGE
-                """
-            }
-        }
+      }
     }
+
+    stage('Run Containers') {
+      steps {
+        script {
+          sh 'docker network create lms-net || true'
+          sh '''
+            docker run -d --name postgres_container \
+              --network lms-net \
+              -e POSTGRES_USER=myuser \
+              -e POSTGRES_PASSWORD=mypass \
+              -e POSTGRES_DB=mydb \
+              -p 5432:5432 postgres:15
+
+            docker run -d --name backend \
+              --network lms-net \
+              -e DATABASE_URL=postgresql://myuser:mypass@postgres_container:5432/mydb \
+              -p 3000:3000 $BACKEND_IMAGE
+
+            docker run -d --name frontend \
+              --network lms-net \
+              -p 80:80 $FRONTEND_IMAGE
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      echo "Pipeline completed"
+    }
+  }
 }
 
