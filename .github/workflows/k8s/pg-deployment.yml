@@ -1,15 +1,25 @@
-name: pg-deployment
-on:
-  workflow_call:
-jobs:
-  create-deploy-postgres:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Configure kubectl
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name lms-cluster
-      - name: Apply PostgreSQL Deployment
-        run: |
-          kubectl apply -f k8s/pg-deployment.yaml     
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres
+  template:
+    metadata:
+      labels:
+        component: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
