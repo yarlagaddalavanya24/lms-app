@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend-container
-          image: murali1103/webapp
+          image: lavanyayarlagadda24/webapp
           imagePullPolicy: Always
           ports:
             - containerPort: 80
