@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend-container
-          image: murali1108/api
+          image: lavanayayarlagadda24/api
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
