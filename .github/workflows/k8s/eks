@@ -7,20 +7,37 @@ jobs:
     environment: production
     steps:
       - name: Slack Notification - Start
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_USERNAME: GitHub Actions 
-          SLACK_COLOR: '#36a64f'
-          SLACK_TITLE: "LMS EKS Deployment Started"
-          SLACK_MESSAGE: "GitHub Actions workflow for LMS EKS deployment has started."
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Install Tools
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type:incoming-webhook
+          playload: |
+            text: "GitHub Actions workflow for LMS EKS deployment has started."
+            channel: "all-project"
+      - name: Clone LMS App Repository
+        run: git clone https://github.com/lavanyayarlagadda24/lms-app.git
+      - name: Install AWS CLI
         run: |
-          echo "Installing AWS CLI, kubectl, docker..."
+          sudo apt install unzip
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+      - name: Install kubectl
+        run: |
+          curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.31.3/2024-12-12/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          sudo cp kubectl /usr/local/bin
+      - name: Install docker
+        run: |
+          curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+          sudo usermod -aG docker $USER
+          newgrp docker
       - name: Configure AWS CLI
-        run: echo "AWS credentials are configured"
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
       - name: Database Setup
@@ -29,17 +46,31 @@ jobs:
           kubectl apply -f pg-secret.yml
           kubectl apply -f pg-deployment.yml
           kubectl apply -f pg-service.yml
-      - name: Backend Setup
+     - name: build backend image
         run: |
-          docker build -t lavanyayarlagadda24/api ./lms-app/backend
-          docker push lavanyayarlagadda24/api
+          cd api
+          docker build -t ${{ vars.DOCKER_USERNAME}}/api:latest .
+      - name: build frontend image
+        run: |
+          cd webapp
+          docker build -t ${{ vars.DOCKER_USERNAME}}/webapp:latest .
+      - name: docker login
+        uses: docker/login-action@v3.4.0
+        with:
+          username: ${{ vars.DOCKER_USERNAME}}
+          password: ${{ secrets.DOCKER_PASSWORD}}
+      - name: push backend image
+        run: | 
+          docker push ${{ vars.DOCKER_USERNAME}}/api:latest
+          docker push ${{ vars.DOCKER_USERNAME}}/webapp:latest        
+      - name: pull the image
+        run: docker pull ${{ vars.DOCKER_USERNAME}}/api:latest
+      - name: backend setup
           kubectl apply -f be-configmap.yml
           kubectl apply -f be-deployment.yml
           kubectl apply -f be-service.yml
       - name: Frontend Setup
         run: |
-          docker build -t lavanyayarlagadda24/webapp ./lms-app/frontend
-          docker push lavanyayarlagadda24/webapp
           kubectl apply -f fe-deployment.yml
           kubectl apply -f fe-service.yml
       - name: Slack Notification - Success
