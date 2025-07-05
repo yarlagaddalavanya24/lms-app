@@ -1,25 +1,44 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      component: postgres
-  template:
-    metadata:
-      labels:
-        component: postgres
-    spec:
-      containers:
-        - name: postgres
-          image: postgres:14
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: password
+name: pg-deployment
+on:
+  workflow_call:
+
+jobs:
+  deploy-postgres:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name lms-cluster
+
+      - name: Apply PostgreSQL Deployment
+        run: |
+          cat <<EOF > pg-deployment.yml
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: postgres-deployment
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                component: postgres
+            template:
+              metadata:
+                labels:
+                  component: postgres
+              spec:
+                containers:
+                  - name: postgres
+                    image: postgres:14
+                    ports:
+                      - containerPort: 5432
+                    env:
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: postgres-secret
+                            key: password
+          EOF
+
+          kubectl apply -f pg-deployment.yml
+
