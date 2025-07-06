@@ -121,6 +121,16 @@ jobs:
             echo "⏳ Waiting 15s for ELB to be provisioned..."
             sleep 15
           done
+      - name: View Postgres Logs
+        run: |
+          POD=$(kubectl get pods -l component=postgres -o jsonpath="{.items[0].metadata.name}")
+          echo "📦 Postgres Pod: $POD"
+          kubectl logs $POD
+      - name: View Backend Logs
+        run: |
+          POD=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
+          echo "🚀 Backend Pod: $POD"
+          kubectl logs $POD
 
       - name: Slack Notification - Success
         if: success()
