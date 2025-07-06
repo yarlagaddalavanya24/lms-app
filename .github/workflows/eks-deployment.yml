@@ -10,7 +10,7 @@ jobs:
         uses: slackapi/slack-github-action@v2.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type:incoming-webhook
+          webhook-type: incoming-webhook
           playload: |
             text: "GitHub Actions workflow for LMS EKS deployment has started."
             channel: "all-project"
