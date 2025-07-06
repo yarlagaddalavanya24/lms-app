@@ -40,7 +40,6 @@ jobs:
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
       - name: Database Setup
-        working-directory: lms-app
         run: |
           kubectl apply -f .github/workflows/k8s/pg-secret.yml
           kubectl apply -f .github/workflows/k8s/pg-deployment.yml
@@ -63,13 +62,11 @@ jobs:
           docker push ${{ vars.DOCKER_USERNAME }}/api:latest
           docker push ${{ vars.DOCKER_USERNAME }}/webapp:latest
       - name: Backend Deployment
-        working-directory: lms-app
         run: |
           kubectl apply -f .github/workflows/k8s/be-configmap.yml
           kubectl apply -f .github/workflows/k8s/be-deployment.yml
           kubectl apply -f .github/workflows/k8s/be-service.yml
       - name: Frontend Deployment
-        working-directory: lms-app
         run: |
           kubectl apply -f .github/workflows/k8s/fe-deployment.yml
           kubectl apply -f .github/workflows/k8s/fe-service.yml
