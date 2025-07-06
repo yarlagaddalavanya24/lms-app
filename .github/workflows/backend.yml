@@ -1,10 +1,6 @@
- name: backend setup
+name: backend-deploy
 on:
-  push:
-    paths:
-      - "api/**"
-      - "k8s/**"
-      - ".github/workflows/**"
+  workflow_call:
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -18,29 +14,25 @@ jobs:
         with:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and push Docker image
+      - name: Build and push backend image
         run: |
-          IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/api:latest
-          echo "Building $IMAGE_NAME"
-          docker build -t $IMAGE_NAME ./api
-          echo "Pushing $IMAGE_NAME"
-          docker push $IMAGE_NAME
-
+          IMAGE=${{ vars.DOCKER_USERNAME }}/api:latest
+          docker build -t $IMAGE ./api
+          docker push $IMAGE
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
-
-      - name: Deploy Backend to Kubernetes
+      - name: Deploy backend
         run: |
           kubectl apply -f k8s/be-configmap.yml
           kubectl apply -f k8s/be-deployment.yml
           kubectl apply -f k8s/be-service.yml
+
 
 
 
