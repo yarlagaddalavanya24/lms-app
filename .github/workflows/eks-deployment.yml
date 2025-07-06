@@ -77,9 +77,64 @@ jobs:
         run: |
           docker push ${{ vars.DOCKER_USERNAME }}/api:latest
           docker push ${{ vars.DOCKER_USERNAME }}/webapp:latest
-
-      - name: Deploy Backend
+      - name: Backend Deployment
         run: |
           kubectl apply -f .github/workflows/k8s/be-configmap.yml
           kubectl apply -f .github/workflows/k8s/be-deployment.yml
-          kubectl apply -f .github
+          kubectl apply -f .github/workflows/k8s/be-service.yml
+      - name: Get Backend Service LoadBalancer URL
+        run: |
+          echo "Waiting for Backend LoadBalancer external IP..."
+          for i in {1..10}; do
+            BACKEND_IP=$(kubectl get svc be-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [[ "$BACKEND_IP" != "" ]]; then
+              echo "✅ Backend is available at: http://$BACKEND_IP"
+              echo "BACKEND_URL=http://$BACKEND_IP" >> $GITHUB_ENV
+              break
+            fi
+            echo "⏳ Waiting 15s for ELB to be provisioned..."
+            sleep 15
+          done
+      - name: Frontend Deployment
+        run: |
+          kubectl apply -f .github/workflows/k8s/fe-configmap.yml
+          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
+          kubectl apply -f .github/workflows/k8s/fe-service.yml
+
+      - name: Get Frontend Service LoadBalancer URL
+        run: |
+          echo "Waiting for Frontend LoadBalancer external IP..."
+          for i in {1..10}; do
+            FRONTEND_IP=$(kubectl get svc lms-fe-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [[ "$FRONTEND_IP" != "" ]]; then
+              echo "✅ Frontend is available at: http://$FRONTEND_IP"
+              echo "FRONTEND_URL=http://$FRONTEND_IP" >> $GITHUB_ENV
+              break
+            fi
+            echo "⏳ Waiting 15s for ELB to be provisioned..."
+            sleep 15
+          done
+
+      - name: Slack Notification - Success
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: GitHub Actions
+          SLACK_COLOR: good
+          SLACK_TITLE: "✅ LMS Deployment Successful"
+          SLACK_MESSAGE: |
+            LMS EKS Deployment completed.
+            - Backend: ${{ env.BACKEND_URL }}
+            - Frontend: ${{ env.FRONTEND_URL }}
+
+      - name: Slack Notification - Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: GitHub Actions
+          SLACK_COLOR: danger
+          SLACK_TITLE: "❌ LMS Deployment Failed"
+          SLACK_MESSAGE: "An error occurred during deployment. Please check the workflow logs."
+
