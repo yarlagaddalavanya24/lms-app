@@ -39,11 +39,11 @@ jobs:
           aws-region: us-east-1
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
-      - name: Database Setup
+      - name: Apply Database Resources
         run: |
-          kubectl apply -f .github/workflows/k8s/pg-secret.yml
-          kubectl apply -f .github/workflows/k8s/pg-deployment.yml
-          kubectl apply -f .github/workflows/k8s/pg-service.yml
+          kubectl apply -f k8s/pg-secret.yml
+          kubectl apply -f k8s/pg-deployment.yml
+          kubectl apply -f k8s/pg-service.yml
       - name: Build Backend Image
         run: |
           cd lms-app/api
@@ -63,13 +63,13 @@ jobs:
           docker push ${{ vars.DOCKER_USERNAME }}/webapp:latest
       - name: Backend Deployment
         run: |
-          kubectl apply -f .github/workflows/k8s/be-configmap.yml
-          kubectl apply -f .github/workflows/k8s/be-deployment.yml
-          kubectl apply -f .github/workflows/k8s/be-service.yml
+          kubectl apply -f k8s/be-configmap.yml
+          kubectl apply -f k8s/be-deployment.yml
+          kubectl apply -f k8s/be-service.yml
       - name: Frontend Deployment
         run: |
-          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
-          kubectl apply -f .github/workflows/k8s/fe-service.yml
+          kubectl apply -f k8s/fe-deployment.yml
+          kubectl apply -f k8s/fe-service.yml
       - name: Slack Notification - Success
         if: success()
         uses: rtCamp/action-slack-notify@v2
