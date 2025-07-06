@@ -39,6 +39,11 @@ jobs:
           aws-region: us-east-1
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
+      - name: Debug Directory
+        run: |
+          pwd
+          ls -la
+          ls -la k8s
       - name: Apply Database Resources
         run: |
           kubectl apply -f k8s/pg-secret.yml
