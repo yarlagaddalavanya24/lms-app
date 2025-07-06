@@ -1,4 +1,4 @@
-ame: backend setup
+name: backend setup
 on: push
 jobs:
   backend:
