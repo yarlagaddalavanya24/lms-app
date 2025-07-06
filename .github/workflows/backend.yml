@@ -50,12 +50,19 @@ jobs:
 
       - name: View Backend Logs
         run: |
-          echo "⏳ Waiting for pod to be ready..."
-          kubectl wait --for=condition=ready pod -l app=lms-be --timeout=60s
+          echo "⏳ Waiting up to 180s for backend pod to become ready..."
+          if ! kubectl wait --for=condition=ready pod -l app=lms-be --timeout=180s; then
+            echo "⚠️ Pod did not become ready. Showing pod description and logs..."
+          fi
+
           POD=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
           echo "🚀 Backend Pod: $POD"
-          kubectl logs $POD
 
+          echo "🔍 Describing pod..."
+          kubectl describe pod $POD || true
+
+          echo "📜 Backend container logs:"
+          kubectl logs $POD || true
 
 
 
