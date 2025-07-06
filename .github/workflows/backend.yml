@@ -1,8 +1,8 @@
 ame: backend setup
-on: workflow_call
+on: push
 jobs:
   backend:
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps: 
       - name: pull the image
         run: docker pull ${{ vars.DOCKER_USERNAME}}/api:latest
