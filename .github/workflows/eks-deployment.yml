@@ -22,69 +22,57 @@ jobs:
            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
            unzip awscliv2.zip
            sudo ./aws/install --update
-
-
       - name: Install kubectl
         run: |
           curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.31.3/2024-12-12/bin/linux/amd64/kubectl
           chmod +x ./kubectl
           sudo mv ./kubectl /usr/local/bin/
-
       - name: Install Docker
         run: |
           curl -fsSL https://get.docker.com -o get-docker.sh
           sh get-docker.sh
-
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
-
       - name: Database Setup
+        working-directory: lms-app
         run: |
-          cd lms-app/k8s
-          kubectl apply -f pg-secret.yml
-          kubectl apply -f pg-deployment.yml
-          kubectl apply -f pg-service.yml
-
+          kubectl apply -f .github/workflows/k8s/pg-secret.yml
+          kubectl apply -f .github/workflows/k8s/pg-deployment.yml
+          kubectl apply -f .github/workflows/k8s/pg-service.yml
       - name: Build Backend Image
         run: |
           cd lms-app/api
           docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest .
-
       - name: Build Frontend Image
         run: |
           cd lms-app/webapp
           docker build -t ${{ vars.DOCKER_USERNAME }}/webapp:latest .
-
       - name: Docker Login
         uses: docker/login-action@v3.4.0
         with:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Push Docker Images
         run: |
           docker push ${{ vars.DOCKER_USERNAME }}/api:latest
           docker push ${{ vars.DOCKER_USERNAME }}/webapp:latest
-
       - name: Backend Deployment
+        working-directory: lms-app
         run: |
-          cd lms-app/k8s
-          kubectl apply -f be-configmap.yml
-          kubectl apply -f be-deployment.yml
-          kubectl apply -f be-service.yml
-
+          kubectl apply -f .github/workflows/k8s/be-configmap.yml
+          kubectl apply -f .github/workflows/k8s/be-deployment.yml
+          kubectl apply -f .github/workflows/k8s/be-service.yml
       - name: Frontend Deployment
+        working-directory: lms-app
         run: |
-          kubectl apply -f lms-app/k8s/fe-deployment.yml
-          kubectl apply -f lms-app/k8s/fe-service.yml
-
+          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
+          kubectl apply -f .github/workflows/k8s/fe-service.yml
       - name: Slack Notification - Success
         if: success()
         uses: rtCamp/action-slack-notify@v2
