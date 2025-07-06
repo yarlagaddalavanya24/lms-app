@@ -15,7 +15,6 @@ jobs:
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
       - name: Deploy database to Kubernetes
-        working-directory: ./lms-app
         run: |
           kubectl apply -f k8s/pg-secret.yml
           kubectl apply -f k8s/pg-deployment.yml
