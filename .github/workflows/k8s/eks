@@ -1,6 +1,6 @@
 name: eks deployment
 on:
-  workflow_dispatch:
+  push
 jobs:
   eks-deployment:
     runs-on: ubuntu-latest
