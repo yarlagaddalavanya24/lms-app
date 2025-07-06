@@ -1,6 +1,6 @@
 name: frontend setup
 on:
-  workflow_call:  
+  push:  
 jobs:
   frontend:
     runs-on: ubuntu-latest
