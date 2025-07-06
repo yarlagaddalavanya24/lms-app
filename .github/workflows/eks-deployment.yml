@@ -97,7 +97,6 @@ jobs:
           done
       - name: Frontend Deployment
         run: |
-          kubectl apply -f .github/workflows/k8s/fe-configmap.yml
           kubectl apply -f .github/workflows/k8s/fe-deployment.yml
           kubectl apply -f .github/workflows/k8s/fe-service.yml
 
