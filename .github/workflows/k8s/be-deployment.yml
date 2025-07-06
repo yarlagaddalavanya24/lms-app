@@ -14,13 +14,13 @@ spec:
     spec:
       containers:
         - name: backend-container
-          image: lavanayayarlagadda24/api
+          image: lavanayayarlagadda24/api:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
           envFrom:
             - configMapRef:
-                name: backend-config-map
+                name: be-configmap
           env:
             - name: DB_PASSWORD
               valueFrom:
