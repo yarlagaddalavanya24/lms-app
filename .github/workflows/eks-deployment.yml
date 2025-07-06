@@ -76,17 +76,16 @@ jobs:
         run: |
           docker push ${{ vars.DOCKER_USERNAME }}/api:latest
           docker push ${{ vars.DOCKER_USERNAME }}/webapp:latest
-
       - name: Backend Deployment
         run: |
-          kubectl apply -f k8s/be-configmap.yml
-          kubectl apply -f k8s/be-deployment.yml
-          kubectl apply -f k8s/be-service.yml
-
+          kubectl apply -f .github/workflows/k8s/be-configmap.yml
+          kubectl apply -f .github/workflows/k8s/be-deployment.yml
+          kubectl apply -f .github/workflows/k8s/be-service.yml
+     
       - name: Frontend Deployment
         run: |
-          kubectl apply -f k8s/fe-deployment.yml
-          kubectl apply -f k8s/fe-service.yml
+          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
+          kubectl apply -f .github/workflows/k8s/fe-service.yml
 
       - name: Slack Notification - Success
         if: success()
