@@ -1,35 +1,29 @@
-name: frontend setup
-
+ name: backend setup
 on:
   push:
     paths:
-      - "frontend/**"
+      - "api/**"
       - "k8s/**"
       - ".github/workflows/**"
-
 jobs:
-  frontend:
+  backend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/webapp:latest
-          echo "🔨 Building $IMAGE_NAME"
-          docker build -t $IMAGE_NAME ./webapp
-          echo "📤 Pushing $IMAGE_NAME"
+          IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/api:latest
+          echo "Building $IMAGE_NAME"
+          docker build -t $IMAGE_NAME ./api
+          echo "Pushing $IMAGE_NAME"
           docker push $IMAGE_NAME
 
       - name: Configure AWS credentials
@@ -42,27 +36,11 @@ jobs:
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
 
-      - name: Deploy Frontend to Kubernetes
+      - name: Deploy Backend to Kubernetes
         run: |
-          kubectl apply -f k8s/fe-deployment.yml
-          kubectl apply -f k8s/fe-service.yml
-
-      - name: View Frontend Logs
-        run: |
-          echo "⏳ Waiting up to 180s for frontend pod to become ready..."
-          if ! kubectl wait --for=condition=ready pod -l app=lms-fe --timeout=180s; then
-            echo "⚠️ Pod did not become ready. Showing pod description and logs..."
-          fi
-
-          POD=$(kubectl get pods -l app=lms-fe -o jsonpath="{.items[0].metadata.name}")
-          echo "🚀 Frontend Pod: $POD"
-
-          echo "🔍 Describing pod..."
-          kubectl describe pod $POD || true
-
-          echo "📜 Frontend container logs:"
-          kubectl logs $POD || true
-
+          kubectl apply -f k8s/be-configmap.yml
+          kubectl apply -f k8s/be-deployment.yml
+          kubectl apply -f k8s/be-service.yml
 
 
 
