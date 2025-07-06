@@ -1,12 +1,57 @@
-name: Deploy
-on:workflow_call
-    branches: [main]
+name: eks-deployment
+
+on:
+  workflow_dispatch:
+
 jobs:
-  call-pg:
+  notify-start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification - Start
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "Starting LMS EKS Deployment...",
+              "channel": "all-project"
+            }
+
+  postgres:
     uses: ./.github/workflows/pg-deploy.yml
-  call-backend:
+    needs: notify-start
+
+  backend:
     uses: ./.github/workflows/be-deploy.yml
-    needs: call-pg
-  call-frontend:
+    needs: postgres
+
+  frontend:
     uses: ./.github/workflows/fe-deploy.yml
-    needs: call-backend
+    needs: backend
+
+  notify-success:
+    if: success()
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    steps:
+      - name: Slack Notification - Success
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: GitHub Actions
+          SLACK_COLOR: good
+          SLACK_TITLE: " LMS Deployment Successful"
+          SLACK_MESSAGE: "All components deployed successfully."
+
+  notify-failure:
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification - Failure
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: GitHub Actions
+          SLACK_COLOR: danger
+          SLACK_TITLE: " LMS Deployment Failed"
+          SLACK_MESSAGE: "Deployment failed. Please check logs."
