@@ -11,7 +11,7 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          playload: |
+          payload: |
             text: "GitHub Actions workflow for LMS EKS deployment has started."
             channel: "all-project"
       - name: Clone LMS App Repository
@@ -66,6 +66,7 @@ jobs:
       - name: pull the image
         run: docker pull ${{ vars.DOCKER_USERNAME}}/api:latest
       - name: backend setup
+        run: |
           kubectl apply -f be-configmap.yml
           kubectl apply -f be-deployment.yml
           kubectl apply -f be-service.yml
