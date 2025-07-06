@@ -3,7 +3,6 @@ name: backend setup
 on:
   push
 
-
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -22,7 +21,7 @@ jobs:
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
 
-      - name: Pull the image
+      - name: Pull the image (optional)
         run: docker pull ${{ vars.DOCKER_USERNAME }}/api:latest
 
       - name: Deploy Backend to Kubernetes
@@ -36,4 +35,11 @@ jobs:
           POD=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
           echo "🚀 Backend Pod: $POD"
           kubectl logs $POD
+
+      - name: Describe Pod (for Debugging ImagePull issues)
+        if: failure()
+        run: |
+          POD=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
+          kubectl describe pod $POD
+
 
