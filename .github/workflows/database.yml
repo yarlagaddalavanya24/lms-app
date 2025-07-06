@@ -1,6 +1,5 @@
 name: database setup
-on:
-  workflow_call:
+on: push
 jobs:
   database:
     runs-on: ubuntu-latest
