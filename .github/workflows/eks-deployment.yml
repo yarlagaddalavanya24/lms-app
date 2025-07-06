@@ -16,12 +16,13 @@ jobs:
             channel: "all-project"
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Install AWS CLI
+      - name: Update AWS CLI
         run: |
-         sudo apt install unzip -y
-         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-         unzip awscliv2.zip
-         sudo ./aws/install --update
+           sudo apt install unzip -y
+           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+           unzip awscliv2.zip
+           sudo ./aws/install --update
+
 
       - name: Install kubectl
         run: |
