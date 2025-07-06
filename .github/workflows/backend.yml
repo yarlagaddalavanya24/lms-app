@@ -28,7 +28,7 @@ jobs:
         run: |
           IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/webapp:latest
           echo "🔨 Building $IMAGE_NAME"
-          docker build -t $IMAGE_NAME ./frontend
+          docker build -t $IMAGE_NAME ./webapp
           echo "📤 Pushing $IMAGE_NAME"
           docker push $IMAGE_NAME
 
