@@ -81,11 +81,37 @@ jobs:
           kubectl apply -f .github/workflows/k8s/be-configmap.yml
           kubectl apply -f .github/workflows/k8s/be-deployment.yml
           kubectl apply -f .github/workflows/k8s/be-service.yml
+      - name: Get Backend Service LoadBalancer URL
+        run: |
+          echo "Waiting for Backend LoadBalancer external IP..."
+          for i in {1..10}; do
+            BACKEND_IP=$(kubectl get svc lms-be-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [[ "$BACKEND_IP" != "" ]]; then
+              echo "Backend is available at: http://$BACKEND_IP"
+              break
+            fi
+            echo "Waiting 15s for ELB to be provisioned..."
+            sleep 15
+          done
+
      
       - name: Frontend Deployment
         run: |
           kubectl apply -f .github/workflows/k8s/fe-deployment.yml
           kubectl apply -f .github/workflows/k8s/fe-service.yml
+      - name: Get Frontend Service LoadBalancer URL
+        run: |
+          echo "Waiting for LoadBalancer external IP..."
+          for i in {1..10}; do
+            EXTERNAL_IP=$(kubectl get svc lms-fe-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [[ "$EXTERNAL_IP" != "" ]]; then
+              echo "Frontend is available at: http://$EXTERNAL_IP"
+              break
+            fi
+            echo "Waiting 15s for ELB to be provisioned..."
+            sleep 15
+          done
+
 
       - name: Slack Notification - Success
         if: success()
