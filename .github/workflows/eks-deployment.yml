@@ -46,11 +46,11 @@ jobs:
           kubectl apply -f k8s/pg-service.yml
       - name: Build Backend Image
         run: |
-          cd lms-app/api
+          cd api
           docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest .
       - name: Build Frontend Image
         run: |
-          cd lms-app/webapp
+          cd webapp
           docker build -t ${{ vars.DOCKER_USERNAME }}/webapp:latest .
       - name: Docker Login
         uses: docker/login-action@v3.4.0
