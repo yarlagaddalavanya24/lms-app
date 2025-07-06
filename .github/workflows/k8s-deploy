@@ -1,0 +1,12 @@
+name: Deploy
+on:workflow_call
+    branches: [main]
+jobs:
+  call-pg:
+    uses: ./.github/workflows/pg-deploy.yml
+  call-backend:
+    uses: ./.github/workflows/be-deploy.yml
+    needs: call-pg
+  call-frontend:
+    uses: ./.github/workflows/fe-deploy.yml
+    needs: call-backend
