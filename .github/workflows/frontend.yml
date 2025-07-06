@@ -16,8 +16,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and push frontend image
         run: |
-          IMAGE=${{ vars.DOCKER_USERNAME }}/frontend:latest
-          docker build -t $IMAGE ./frontend
+          IMAGE=${{ vars.DOCKER_USERNAME }}/webapp:latest
+          docker build -t $IMAGE ./webapp
           docker push $IMAGE
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
