@@ -17,7 +17,6 @@ jobs:
       - name: Deploy database to Kubernetes
         working-directory: ./lms-app
         run: |
-          kubectl apply -f k8s/pg-secret.yml
-          kubectl apply -f k8s/pg-deployment.yml
-          kubectl apply -f k8s/pg-service.yml
-      
+          kubectl apply -f lms-app/k8s/pg-secret.yml
+          kubectl apply -f lms-app/k8s/pg-deployment.yml
+          kubectl apply -f lms-app/k8s/pg-service.yml
