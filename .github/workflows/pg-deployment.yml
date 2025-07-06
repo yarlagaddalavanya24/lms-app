@@ -1,15 +1,1 @@
-name: pg-deployment
-on:
-  workflow_call:
-jobs:
-  create-deploy-postgres:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Configure kubectl
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name lms-cluster
-      - name: Apply PostgreSQL Deployment
-        run: |
-          kubectl apply -f k8s/pg-deployment.yaml 
+
