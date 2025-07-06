@@ -1,14 +1,14 @@
-name: backend setup
+name: frontend setup
 
 on:
   push:
     paths:
-      - "api/**"
+      - "frontend/**"
       - "k8s/**"
       - ".github/workflows/**"
 
 jobs:
-  backend:
+  frontend:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,9 +26,9 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/api:latest
+          IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/frontend:latest
           echo "🔨 Building $IMAGE_NAME"
-          docker build -t $IMAGE_NAME ./api
+          docker build -t $IMAGE_NAME ./frontend
           echo "📤 Pushing $IMAGE_NAME"
           docker push $IMAGE_NAME
 
@@ -42,26 +42,25 @@ jobs:
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
 
-      - name: Deploy Backend to Kubernetes
+      - name: Deploy Frontend to Kubernetes
         run: |
-          kubectl apply -f k8s/be-configmap.yml
-          kubectl apply -f k8s/be-deployment.yml
-          kubectl apply -f k8s/be-service.yml
+          kubectl apply -f k8s/fe-deployment.yml
+          kubectl apply -f k8s/fe-service.yml
 
-      - name: View Backend Logs
+      - name: View Frontend Logs
         run: |
-          echo "⏳ Waiting up to 180s for backend pod to become ready..."
-          if ! kubectl wait --for=condition=ready pod -l app=lms-be --timeout=180s; then
+          echo "⏳ Waiting up to 180s for frontend pod to become ready..."
+          if ! kubectl wait --for=condition=ready pod -l app=lms-fe --timeout=180s; then
             echo "⚠️ Pod did not become ready. Showing pod description and logs..."
           fi
 
-          POD=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
-          echo "🚀 Backend Pod: $POD"
+          POD=$(kubectl get pods -l app=lms-fe -o jsonpath="{.items[0].metadata.name}")
+          echo "🚀 Frontend Pod: $POD"
 
           echo "🔍 Describing pod..."
           kubectl describe pod $POD || true
 
-          echo "📜 Backend container logs:"
+          echo "📜 Frontend container logs:"
           kubectl logs $POD || true
 
 
