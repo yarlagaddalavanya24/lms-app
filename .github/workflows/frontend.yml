@@ -1,6 +1,5 @@
 name: frontend-deploy
-on:
-  push:
+on: workflow_call
 jobs:
   frontend:
     runs-on: ubuntu-latest
