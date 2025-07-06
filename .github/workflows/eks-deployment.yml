@@ -103,7 +103,7 @@ jobs:
         run: |
           echo "Waiting for LoadBalancer external IP..."
           for i in {1..10}; do
-            EXTERNAL_IP=$(kubectl get svc fe-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            EXTERNAL_IP=$(kubectl get svc lms-fe-service -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
             if [[ "$EXTERNAL_IP" != "" ]]; then
               echo "Frontend is available at: http://$EXTERNAL_IP"
               break
