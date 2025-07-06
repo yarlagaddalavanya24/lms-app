@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: backend-config-map
+  name: be-configmap
 data:
   DB_HOST: postgres-cluster-ip-service
   DB_PORT: "5432"
