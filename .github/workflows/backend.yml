@@ -1,5 +1,5 @@
 name: backend-deploy
-on: workflow_call
+on: push
 jobs:
   backend:
     runs-on: ubuntu-latest
