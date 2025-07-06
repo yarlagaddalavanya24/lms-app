@@ -21,13 +21,13 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/api:latest ./api
-          docker push ${{ secrets.DOCKER_USERNAME }}/api:latest
+          docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest ./api
+          docker push ${{ vars.DOCKER_USERNAME }}/api:latest
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -50,6 +50,7 @@ jobs:
           POD=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
           echo "🚀 Backend Pod: $POD"
           kubectl logs $POD
+
 
 
 
