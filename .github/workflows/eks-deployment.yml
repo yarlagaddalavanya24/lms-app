@@ -14,10 +14,8 @@ jobs:
           payload: |
             text: "GitHub Actions workflow for LMS EKS deployment has started."
             channel: "all-project"
-
-      - name: Clone LMS App Repository
-        run: git clone https://github.com/lavanyayarlagadda24/lms-app.git
-
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Install AWS CLI
         run: |
           sudo apt install unzip -y
