@@ -1,7 +1,6 @@
 name: Deploy LMS (All Services)
 
 on: workflow_dispatch
-
 jobs:
   notify-start:
     runs-on: ubuntu-latest
