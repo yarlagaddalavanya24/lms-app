@@ -69,17 +69,20 @@ jobs:
             echo "Still waiting for LoadBalancer... attempt $i"
             sleep 15
           done
-      - name: Wait for Frontend LoadBalancer URL (fe-service)
-        shell: bash
-        run: |
-           echo "Waiting for Frontend LoadBalancer to be ready..."
-           for i in {1..10}; do
-             FRONTEND_URL=$(kubectl get svc fe-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
-             if [[ ! -z "$FRONTEND_URL" ]]; then
-               echo "✅ Frontend LoadBalancer URL: http://$FRONTEND_URL"
-               echo "FRONTEND_URL=http://$FRONTEND_URL" >> $GITHUB_ENV
-               break
-             fi
+      - name: Check backend pod status
+        run: kubectl get pods -l app=lms-be
+     - name: Wait for Frontend LoadBalancer to be ready
+       run: |
+         echo "Waiting for Frontend LoadBalancer to be ready..."
+         for i in {1..10}; do
+           FRONTEND_URL=$(kubectl get svc fe-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || echo "")
+           if [ -n "$FRONTEND_URL" ]; then
+              echo "Frontend LoadBalancer URL: http://$FRONTEND_URL"
+             break
+           fi
+           echo "Waiting for LoadBalancer to be assigned... ($i)"
+           sleep 10
+         done
 
   notify-success:
     if: ${{ success() }}
