@@ -26,7 +26,12 @@ jobs:
           aws-region: us-east-1
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
+      - name: Debug working directory
+        run: |
+          pwd
+          ls -l
       - name: Deploy backend
+        working-directory: ./k8s
         run: |
           kubectl apply -f k8s/be-configmap.yml
           kubectl apply -f k8s/be-deployment.yml
