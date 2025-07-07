@@ -10,16 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Start
-        uses: slackapi/slack-github-action@v2.1.0
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "LMS Deployment has started!",
-              "channel": "all-project"
-            }
-
- 
+  uses: slackapi/slack-github-action@v2.1.0
+  with:
+    webhook-type: incoming-webhook
+    webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+    payload: |
+        "text": "GitHub Actions workflow for LMS EKS deployment has started.",
+        "channel": "all-project"
   call-database-workflow:
     uses: ./.github/workflows/database.yml
 
