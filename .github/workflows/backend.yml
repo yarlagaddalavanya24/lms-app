@@ -48,6 +48,7 @@ jobs:
 
       - name: Deploy backend
         run: |
+          kubectl apply -f k8s/pg-secret.yml 
           kubectl apply -f k8s/be-configmap.yml
           kubectl apply -f k8s/be-deployment.yml
           kubectl apply -f k8s/be-service.yml
