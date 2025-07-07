@@ -70,6 +70,14 @@ jobs:
           done
       - name: Get pods
         run: kubectl get pods --all-namespaces
+      - name: Debug backend pod logs
+        run: |
+          echo "Getting pod name..."
+          POD_NAME=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
+          echo "Pod name: $POD_NAME"
+          echo "Backend pod logs:"
+          kubectl logs $POD_NAME
+
      
 
 
