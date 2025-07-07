@@ -15,13 +15,13 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
-              "text": "🚀 LMS Deployment has started!",
+              "text": "LMS Deployment has started!",
               "channel": "all-project"
             }
 
   pg:
     needs: notify-start
-    uses: ./.github/workflows/pg.yml
+    uses: ./.github/workflows/database.yml
 
   backend:
     needs: pg
