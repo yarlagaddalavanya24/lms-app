@@ -14,9 +14,8 @@ jobs:
           aws-region: us-east-1
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms
-      - name: Apply all Kubernetes files
-        working-directory: ./lms-app/k8s
+      - name: Deploy database
         run: |
-          kubectl apply -f pg-secret.yml
-          kubectl apply -f pg-deployment.yml
-          kubectl apply -f pg-service.yml
+          kubectl apply -f k8s/pg-secret.yml
+          kubectl apply -f k8s/pg-deployment.yml
+          kubectl apply -f k8s/pg-service.yml
