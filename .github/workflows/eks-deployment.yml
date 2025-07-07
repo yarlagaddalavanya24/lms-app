@@ -52,8 +52,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+
+      - name: Update kubeconfig for EKS
+        run: aws eks update-kubeconfig --region us-east-1 --name YOUR_EKS_CLUSTER_NAME
+
       - name: Get pods
         run: kubectl get pods --all-namespaces
+
       - name: Debug frontend pod logs
         run: |
           echo "Getting pod name..."
@@ -61,6 +66,7 @@ jobs:
           echo "Pod name: $POD_NAME"
           echo "frontend pod logs:"
           kubectl logs $POD_NAME
+
       - name: Run kubectl get svc
         run: kubectl get svc -A
 
@@ -108,3 +114,4 @@ jobs:
               "text": "LMS Deployment failed. Please check logs.",
               "channel": "all-project"
             }
+
