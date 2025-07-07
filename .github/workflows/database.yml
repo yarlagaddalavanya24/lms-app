@@ -19,3 +19,10 @@ jobs:
           kubectl apply -f k8s/pg-secret.yml
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
+      - name: Debug working directory
+        run: |
+          pwd
+          ls -l
+      
+      
+
