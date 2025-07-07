@@ -19,8 +19,8 @@ jobs:
               "channel": "all-project"
             }
 
-  pg:
-    needs: notify-start
+ 
+  call-database-workflow:
     uses: ./.github/workflows/database.yml
 
   backend:
