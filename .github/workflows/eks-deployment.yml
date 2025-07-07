@@ -46,7 +46,7 @@ jobs:
 
   notify-failure:
     if: ${{ failure() }}
-    needs: [pg, backend, frontend]
+    needs: [database, backend, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Failure
