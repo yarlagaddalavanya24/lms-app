@@ -24,11 +24,9 @@ jobs:
     uses: ./.github/workflows/database.yml
 
   backend:
-    needs: pg
     uses: ./.github/workflows/backend.yml
 
-  frontend:
-    needs: backend
+  frontend
     uses: ./.github/workflows/frontend.yml
 
   notify-success:
