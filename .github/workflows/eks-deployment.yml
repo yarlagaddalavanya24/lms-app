@@ -1,5 +1,3 @@
-# .github/workflows/main-deploy.yml
-
 name: Deploy LMS (All Services)
 
 on:
@@ -10,30 +8,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Start
-  uses: slackapi/slack-github-action@v2.1.0
-  with:
-    webhook-type: incoming-webhook
-    webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-    payload: |
-        "text": "GitHub Actions workflow for LMS EKS deployment has started.",
-        "channel": "all-project"
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "GitHub Actions workflow for LMS EKS deployment has started.",
+              "channel": "all-project"
+            }
+
   call-database-workflow:
     uses: ./.github/workflows/database.yml
+    needs: notify-start
 
   backend:
     uses: ./.github/workflows/backend.yml
+    needs: call-database-workflow
 
   frontend:
     uses: ./.github/workflows/frontend.yml
+    needs: backend
 
   notify-success:
     if: ${{ success() }}
-    needs: [frontend]
+    needs: frontend
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Success
         uses: slackapi/slack-github-action@v2.1.0
         with:
+          webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
@@ -43,17 +48,18 @@ jobs:
 
   notify-failure:
     if: ${{ failure() }}
+    needs: [call-database-workflow, backend, frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Failure
         uses: slackapi/slack-github-action@v2.1.0
         with:
+          webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
               "text": "LMS Deployment failed. Please check logs.",
               "channel": "all-project"
             }
-
 
 
