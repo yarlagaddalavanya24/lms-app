@@ -56,19 +56,17 @@ jobs:
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms
 
-      - name: Wait for LoadBalancers to be assigned
-        run: sleep 60
-
-      - name: Get Backend LoadBalancer URL
+      - name: Wait for Backend LoadBalancer URL
         run: |
-          BACKEND_URL=$(kubectl get svc backend-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "Backend LoadBalancer URL: http://$BACKEND_URL"
-
-      - name: Get Frontend LoadBalancer URL
-        run: |
-          FRONTEND_URL=$(kubectl get svc frontend-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "Frontend LoadBalancer URL: http://$FRONTEND_URL"
-
+          for i in {1..10}; do
+            BACKEND_URL=$(kubectl get svc be-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+            if [ -n "$BACKEND_URL" ]; then
+              echo "Backend LoadBalancer URL: http://$BACKEND_URL"
+              break
+            fi
+            echo "Waiting for backend LoadBalancer... ($i/10)"
+            sleep 10
+          done
   notify-success:
     if: ${{ success() }}
     needs: get-loadbalancer-urls
