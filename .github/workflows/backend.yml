@@ -31,7 +31,6 @@ jobs:
           pwd
           ls -l
       - name: Deploy backend
-        working-directory: ./k8s
         run: |
           kubectl apply -f k8s/be-configmap.yml
           kubectl apply -f k8s/be-deployment.yml
