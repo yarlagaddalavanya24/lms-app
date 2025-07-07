@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend-container
-          image: ${{ vars.DOCKER_USERNAME }}/api:latest
+          image: lavanyayarlagadda24/api:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
