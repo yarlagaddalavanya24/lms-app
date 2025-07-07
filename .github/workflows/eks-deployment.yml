@@ -77,6 +77,8 @@ jobs:
           echo "Pod name: $POD_NAME"
           echo "Backend pod logs:"
           kubectl logs $POD_NAME
+      - name: Run kubectl get svc
+        run: kubectl get svc -A
 
       - name: Wait for Frontend LoadBalancer to be ready
         run: |
