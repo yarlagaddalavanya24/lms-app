@@ -37,7 +37,7 @@ jobs:
             --build-arg REACT_APP_BACKEND_URL=http://a93dde7e34d7b4bf4b3772add569fb73-627247192.us-east-1.elb.amazonaws.com \
             -t $IMAGE ./webapp
           docker push $IMAGE
-          E
+          
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
