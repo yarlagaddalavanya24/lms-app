@@ -32,7 +32,7 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          IMAGE=${{ inputs.DOCKER_USERNAME }}/webapp:latest
+          IMAGE= lavanyayarlagadda24/webapp:latest
           docker build -t $IMAGE ./webapp
           docker push $IMAGE
 
