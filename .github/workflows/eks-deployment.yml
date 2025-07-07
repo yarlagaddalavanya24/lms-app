@@ -70,7 +70,10 @@ jobs:
           done
 
       - name: Check backend pod status
-        run: kubectl get pods -l app=lms-be
+        run: |
+          kubectl get pods -l app=lms-be
+          kubectl logs -l app=lms-be --tail=100
+
 
       - name: Wait for Frontend LoadBalancer to be ready
         run: |
