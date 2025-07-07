@@ -1,6 +1,8 @@
 name: Deploy LMS (All Services)
 
-on: workflow_dispatch
+on:
+  workflow_dispatch
+
 jobs:
   notify-start:
     runs-on: ubuntu-latest
@@ -40,9 +42,36 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+  get-loadbalancer-urls:
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set up kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name lms
+
+      - name: Wait for LoadBalancers to be assigned
+        run: sleep 60
+
+      - name: Get Backend LoadBalancer URL
+        run: |
+          BACKEND_URL=$(kubectl get svc backend-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Backend LoadBalancer URL: http://$BACKEND_URL"
+
+      - name: Get Frontend LoadBalancer URL
+        run: |
+          FRONTEND_URL=$(kubectl get svc frontend-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Frontend LoadBalancer URL: http://$FRONTEND_URL"
+
   notify-success:
     if: ${{ success() }}
-    needs: frontend
+    needs: get-loadbalancer-urls
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Success
@@ -71,5 +100,6 @@ jobs:
               "text": "LMS Deployment failed. Please check logs.",
               "channel": "all-project"
             }
+
 
 
