@@ -6,11 +6,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - name: Debug working directory
+      - name: Debug current directory and contents
         run: |
           pwd
           ls -l
+          ls -l k8s/
+          file k8s/pg-secret.yml
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -27,6 +31,7 @@ jobs:
           kubectl apply -f k8s/pg-secret.yml
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
+
 
       
       
