@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend-container
-          image: ${{ vars.DOCKER_USERNAME }}/api:latest
+          image: lavanyayarlagadda24/api:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
@@ -27,4 +27,5 @@ spec:
                 secretKeyRef:
                   name: pg-secret
                   key: password
-            
+            - name: DATABASE_URL
+              value: "postgresql://postgres:qwerty1234@postgres-cluster-ip-service:5432/postgres"
