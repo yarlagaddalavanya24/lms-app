@@ -34,7 +34,10 @@ jobs:
 
   frontend:
     uses: ./.github/workflows/frontend.yml
-    needs: backend
+    with:
+      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+    secrets:
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   notify-success:
     if: ${{ success() }}
