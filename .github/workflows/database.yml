@@ -1,11 +1,30 @@
 name: database setup
-on: workflow_call
+
+on:
+  workflow_call
+
 jobs:
   database:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      # 🔍 Optional: Debug check for AWS secrets presence
+      - name: Debug AWS secrets presence
+        run: |
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "❌ AWS_ACCESS_KEY_ID is not set!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+            echo "❌ AWS_SECRET_ACCESS_KEY is not set!"
+            exit 1
+          fi
+          echo "✅ AWS credentials are present."
+
+      # ✅ Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -13,14 +32,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # 🧩 Set up kubeconfig for EKS access
       - name: Set up kubeconfig
         run: aws eks update-kubeconfig --region us-east-1 --name lms
 
+      # 📦 Deploy PostgreSQL components
       - name: Deploy database
         run: |
           kubectl apply -f k8s/pg-secret.yml
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
+
 
 
       
