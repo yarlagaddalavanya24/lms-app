@@ -48,6 +48,5 @@ jobs:
 
       - name: Deploy frontend
         run: |
-          kubectl apply -f k8s/fe-configmap.yml
           kubectl apply -f k8s/fe-deployment.yml
           kubectl apply -f k8s/fe-service.yml
