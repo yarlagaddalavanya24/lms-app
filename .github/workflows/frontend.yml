@@ -2,13 +2,17 @@ name: frontend-deploy
 
 on:
   workflow_call:
-    secrets:
-      DOCKER_PASSWORD:
-        required: true
     inputs:
       DOCKER_USERNAME:
         required: true
         type: string
+    secrets:
+      DOCKER_PASSWORD:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
 
 jobs:
   frontend:
@@ -47,5 +51,3 @@ jobs:
           kubectl apply -f k8s/fe-configmap.yml
           kubectl apply -f k8s/fe-deployment.yml
           kubectl apply -f k8s/fe-service.yml
-
-
