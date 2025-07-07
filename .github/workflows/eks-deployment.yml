@@ -78,10 +78,6 @@ jobs:
           echo "Backend pod logs:"
           kubectl logs $POD_NAME
 
-     
-
-
-
       - name: Wait for Frontend LoadBalancer to be ready
         run: |
           echo "Waiting for Frontend LoadBalancer to be ready..."
