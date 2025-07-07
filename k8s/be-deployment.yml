@@ -28,4 +28,4 @@ spec:
                   name: pg-secret
                   key: password
             - name: DATABASE_URL
-              value:postgresql://postgres:qwerty1234@postgres-cluster-ip-service:5432/postgres
+              value: "postgresql://postgres:qwerty1234@postgres-cluster-ip-service:5432/postgres"
