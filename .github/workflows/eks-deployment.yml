@@ -57,16 +57,30 @@ jobs:
         run: aws eks update-kubeconfig --region us-east-1 --name lms
 
       - name: Wait for Backend LoadBalancer URL
+        shell: bash
         run: |
+          echo "Waiting for Backend LoadBalancer URL..."
           for i in {1..10}; do
-            BACKEND_URL=$(kubectl get svc be-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
-            if [ -n "$BACKEND_URL" ]; then
+            BACKEND_URL=$(kubectl get svc be-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            if [[ ! -z "$BACKEND_URL" ]]; then
               echo "Backend LoadBalancer URL: http://$BACKEND_URL"
               break
             fi
-            echo "Waiting for backend LoadBalancer... ($i/10)"
-            sleep 10
+            echo "Still waiting for LoadBalancer... attempt $i"
+            sleep 15
           done
+      - name: Wait for Frontend LoadBalancer URL (fe-service)
+        shell: bash
+        run: |
+           echo "Waiting for Frontend LoadBalancer to be ready..."
+           for i in {1..10}; do
+             FRONTEND_URL=$(kubectl get svc fe-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+             if [[ ! -z "$FRONTEND_URL" ]]; then
+               echo "✅ Frontend LoadBalancer URL: http://$FRONTEND_URL"
+               echo "FRONTEND_URL=http://$FRONTEND_URL" >> $GITHUB_ENV
+               break
+             fi
+
   notify-success:
     if: ${{ success() }}
     needs: get-loadbalancer-urls
