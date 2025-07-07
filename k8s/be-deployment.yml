@@ -27,3 +27,5 @@ spec:
                 secretKeyRef:
                   name: pg-secret
                   key: password
+            - name: DATABASE_URL
+              value: postgresql://postgres:qwerty1234@postgres-service:5432/postgres
