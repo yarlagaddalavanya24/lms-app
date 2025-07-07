@@ -69,6 +69,11 @@ jobs:
 
       - name: Run kubectl get svc
         run: kubectl get svc -A
+      - name: Describe frontend pod
+        run: |
+          POD_NAME=$(kubectl get pods -l app=lms-fe -o jsonpath="{.items[0].metadata.name}")
+          kubectl describe pod $POD_NAME
+
 
       - name: Wait for Frontend LoadBalancer to be ready
         run: |
