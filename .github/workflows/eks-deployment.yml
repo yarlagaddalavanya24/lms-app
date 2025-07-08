@@ -53,32 +53,27 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Set up kubeconfig
+      - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --region us-east-1 --name lms
 
-      - name: Wait for Backend LoadBalancer URL
-        run: |
-          echo "Waiting for Backend LoadBalancer URL..."
-          for i in {1..10}; do
-            BACKEND_URL=$(kubectl get svc be-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
-            if [[ ! -z "$BACKEND_URL" ]]; then
-              echo "Backend LoadBalancer URL: http://$BACKEND_URL"
-              break
-            fi
-            echo "Still waiting for LoadBalancer... attempt $i"
-            sleep 15
-          done
       - name: Get pods
         run: kubectl get pods --all-namespaces
-      - name: Debug backend pod logs
+
+      - name: Debug frontend pod logs
         run: |
           echo "Getting pod name..."
-          POD_NAME=$(kubectl get pods -l app=lms-be -o jsonpath="{.items[0].metadata.name}")
+          POD_NAME=$(kubectl get pods -l app=lms-fe -o jsonpath="{.items[0].metadata.name}")
           echo "Pod name: $POD_NAME"
-          echo "Backend pod logs:"
+          echo "frontend pod logs:"
           kubectl logs $POD_NAME
+
       - name: Run kubectl get svc
         run: kubectl get svc -A
+      - name: Describe frontend pod
+        run: |
+          POD_NAME=$(kubectl get pods -l app=lms-fe -o jsonpath="{.items[0].metadata.name}")
+          kubectl describe pod $POD_NAME
+
 
       - name: Wait for Frontend LoadBalancer to be ready
         run: |
@@ -124,3 +119,4 @@ jobs:
               "text": "LMS Deployment failed. Please check logs.",
               "channel": "all-project"
             }
+
