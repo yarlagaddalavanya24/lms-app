@@ -15,11 +15,14 @@ COPY . .
 # Accept a build argument from outside
 ARG VITE_API_URL
 
-# Expose it to the build
+# Expose it to the build (not strictly required once we write .env.production)
 ENV VITE_API_URL=$VITE_API_URL
 
 # Debug print to ensure the value is visible
 RUN echo "Building with VITE_API_URL = $VITE_API_URL"
+
+# ✅ Write env file so Vite can read it
+RUN echo "VITE_API_URL=$VITE_API_URL" > .env.production
 
 # Run the Vite build
 RUN npm run build
@@ -28,4 +31,5 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
+
 
