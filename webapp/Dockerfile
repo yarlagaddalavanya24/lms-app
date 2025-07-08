@@ -1,21 +1,23 @@
-# Docker file for react app
-FROM node:20 as build
-# Create app directory
+# Stage 1 - Build the frontend
+FROM node:20-alpine AS builder
+
 WORKDIR /app
-# Install app dependencies
+
 COPY package*.json ./
+
 RUN npm install
-# Build app
+
 COPY . .
+
+ARG VITE_API_URL
+
+RUN echo "VITE_API_URL=$VITE_API_URL" > .env.production
+
 RUN npm run build
 
-# Docker file for nginx server to serve react app build files (spa routing)
-
+# Stage 2 - Nginx
 FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-# This is required to make nginx serve index.html for all routes
-EXPOSE 80
-# in the CMD in order for nginx to stay in the foreground
-CMD ["nginx", "-g", "daemon off;"]
+
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 
