@@ -1,0 +1,31 @@
+name: Build and Deploy Webapp
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: lms-app/webapp
+
+      - name: Build webapp
+        run: npm run build
+        working-directory: lms-app/webapp
+        env:
+          VITE_API_URL: http://a93dde7e34d7b4bf4b3772add569fb73-627247192.us-east-1.elb.amazonaws.com/api
+
+  
