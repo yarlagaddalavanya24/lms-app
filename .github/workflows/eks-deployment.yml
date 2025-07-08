@@ -5,7 +5,7 @@ on:
 
 jobs:
   notify-start:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Slack Notification - Start
         uses: slackapi/slack-github-action@v2.1.0
