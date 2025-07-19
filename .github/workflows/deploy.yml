@@ -33,7 +33,7 @@ jobs:
           kubectl version --client
 
       - name: Update kubeconfig to connect to EKS
-        run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
+        run: aws eks update-kubeconfig --region us-east-1 --name lms_cluster
 
       - name: Deploy Database (PostgreSQL)
         run: |
