@@ -58,7 +58,7 @@ jobs:
 
       - name: Build & Push Backend Image
         run: |
-          docker build -t $BE_IMAGE_TAG ./backend
+          docker build -t $BE_IMAGE_TAG ./api
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u lavanyayarlagadda24 --password-stdin
           docker push $BE_IMAGE_TAG
 
