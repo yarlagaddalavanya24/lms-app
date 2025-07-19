@@ -36,7 +36,7 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
       - name: 🔗 Connect to EKS Cluster
-        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+        run: aws eks update-kubeconfig --name lms_cluster
       - name: 🛢️ Database Setup
         run: |
           kubectl apply -f k8s/pg-secret.yaml
