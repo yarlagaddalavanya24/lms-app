@@ -1,4 +1,4 @@
-name: deploy
+name: eks deploy
 
 on:
   push:
@@ -11,38 +11,52 @@ jobs:
       name: production
 
     steps:
-      - name: 🚀 Notify Start
-        run: echo "Starting EKS deployment..."
+      - name: Notify start
+        run: echo "🚀 Starting EKS deployment..."
 
-      - name: 📦 Checkout Code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: ☁️ Configure AWS Credentials
+      - name: Set Image Tags (optional)
+        run: |
+          echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "FE_IMAGE_TAG=lavanyayarlagadda24/frontend:${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "BE_IMAGE_TAG=lavanyayarlagadda24/api:${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      # ✅ Correct AWS credentials configuration
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🧠 Update kubeconfig for EKS
-        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+      - name: Install kubectl
+        run: |
+          curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-03-28/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin
+          kubectl version --client
 
-      - name: 🔍 Verify EKS Access
+      - name: Update kubeconfig to connect to EKS
+        run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Verify EKS access
         run: kubectl get nodes
 
-      - name: 📦 Deploy Database (PostgreSQL)
+      - name: Deploy Database (PostgreSQL)
         run: |
           kubectl apply -f k8s/pg-secret.yml
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
 
-      - name: 🚀 Deploy Backend
+      - name: Deploy Backend
         run: |
           kubectl apply -f k8s/be-configmap.yml
           kubectl apply -f k8s/be-deployment.yml
           kubectl apply -f k8s/be-service.yml
 
-      - name: 🌐 Wait for Backend LoadBalancer
+      - name: Wait for Backend LoadBalancer
         id: get-be-url
         run: |
           for i in {1..30}; do
@@ -52,27 +66,32 @@ jobs:
               echo "BACKEND_URL=http://$BE_URL" >> $GITHUB_ENV
               break
             fi
-            echo "⏳ Waiting for backend LoadBalancer... ($i/30)"
+            echo "⏳ Waiting for backend LoadBalancer..."
             sleep 10
           done
-          if [ -z "$BE_URL" ]; then
-            echo "❌ Backend LoadBalancer not ready after timeout"
-            exit 1
-          fi
 
-      - name: 🧪 Update Frontend .env
+      - name: Debug Pending Pods
+        run: |
+          echo "🔍 Describing all pending pods..."
+          for pod in $(kubectl get pods --field-selector=status.phase=Pending -o jsonpath="{.items[*].metadata.name}"); do
+            echo "-----------------------------"
+            echo "📝 Describing pod: $pod"
+            kubectl describe pod $pod
+          done
+
+      - name: Update Frontend .env with Backend URL
         run: |
           echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.env
 
-      - name: 🚀 Deploy Frontend
+      - name: Deploy Frontend
         run: |
           kubectl apply -f k8s/fe-deployment.yml
           kubectl apply -f k8s/fe-service.yml
 
-      - name: 🧹 List Pods and Clean Up
+      - name: Get Final Pod and Service Info
         run: |
           kubectl get pods -o wide
           kubectl get svc -o wide
 
-      - name: ✅ Finish
-        run: echo "✅ EKS deployment complete!"
+      - name: Finish
+        run: echo "✅ EKS Deployment completed successfully."
