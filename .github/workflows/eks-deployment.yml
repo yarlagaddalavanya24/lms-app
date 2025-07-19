@@ -1,9 +1,9 @@
 name: Deploy LMS (All Services)
 on:
-  workflow_dispatch
+  push
 jobs:
   notify-start:
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
       - name: Slack Notification - Start
         uses: slackapi/slack-github-action@v2.1.0
