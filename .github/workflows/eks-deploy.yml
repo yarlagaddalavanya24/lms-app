@@ -82,7 +82,8 @@ jobs:
             echo "⏳ Waiting for backend LoadBalancer..."
             sleep 10
           done
-
+      - name: List all Pods in default namespace
+        run: kubectl get pods -o wide
       - name: Update Frontend .env with Backend URL
         run: |
           echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.env
