@@ -7,63 +7,58 @@ jobs:
       name: production
     runs-on: ubuntu-latest
     steps:
-      - name: Notification
-        run: echo "📦 EKS deployment process started"
-
-      - name: Checkout Code
+      - name: 📦 Notification
+        run: echo "EKS deployment process started"
+      - name: 📥 Checkout Code
         uses: actions/checkout@v3
-
-      - name: Set Image Tags
+      - name: 🏷️ Set Image Tags
         run: |
           echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "FE_IMAGE_TAG=lavanyayarlagadda24/frontend:${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "BE_IMAGE_TAG=lavanyayarlagadda24/api:${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Install AWS CLI and kubectl
+      - name: 🛠️ Install AWS CLI & kubectl
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip curl
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
+          unzip -o awscliv2.zip
+          sudo ./aws/install --update
           aws --version
-      
-          # Install kubectl (latest stable)
+
           curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
           kubectl version --client
 
-      - name: Configure AWS CLI
+      - name: 🔐 Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
 
-      - name: Connect to EKS Cluster
+      - name: 🔗 Connect to EKS Cluster
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-      - name: Database Setup
+      - name: 🛢️ Database Setup
         run: |
           kubectl apply -f k8s/pg-secret.yaml
           kubectl apply -f k8s/pg-deployment.yaml
           kubectl apply -f k8s/pg-service.yaml
 
-      - name: Backend Setup
+      - name: 🧠 Backend Setup
         run: |
           kubectl apply -f k8s/be-configmap.yaml
-
           sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yaml > temp-be-deployment.yaml
           kubectl apply -f temp-be-deployment.yaml
-
           kubectl apply -f k8s/be-service.yaml
 
-      - name: Frontend Setup
+      - name: 🎨 Frontend Setup
         run: |
           sed "s|lavanyayarlagadda24/frontend:latest|$FE_IMAGE_TAG|g" k8s/fe-deployment.yaml > temp-fe-deployment.yaml
           kubectl apply -f temp-fe-deployment.yaml
-
           kubectl apply -f k8s/fe-service.yaml
 
-      - name: Feedback
+      - name: ✅ Feedback
         run: echo "✅ All services and deployments have been applied!"
+
