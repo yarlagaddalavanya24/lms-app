@@ -6,7 +6,6 @@ jobs:
     environment:
       name: production
     runs-on: ubuntu-latest
-
     steps:
       - name: Notification
         run: echo "📦 EKS deployment process started"
