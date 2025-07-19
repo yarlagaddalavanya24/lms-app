@@ -31,7 +31,9 @@ jobs:
 
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
-
+      - name: Test EKS Auth
+        run: kubectl get nodes
+            
       - name: Database Setup
         run: |
           kubectl apply -f k8s/pg-secret.yml --validate=false
