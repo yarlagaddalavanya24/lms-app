@@ -1,22 +1,17 @@
 name: eks deploy
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   eks-deploy:
     runs-on: ubuntu-latest
     environment:
       name: production
-
     steps:
       - name: Notify start
         run: echo "🚀 Starting EKS deployment..."
-
       - name: Checkout Code
         uses: actions/checkout@v3
-
       - name: Set Image Tags
         run: |
           echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -32,27 +27,23 @@ jobs:
       - name: Connect to EKS Cluster
         run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
       - name: Test EKS Auth
-        run: kubectl get nodes
-            
+        run: kubectl get nodes 
       - name: Database Setup
         run: |
           kubectl apply -f k8s/pg-secret.yml --validate=false
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
-
       - name: Build & Push Backend Image
         run: |
           docker build -t $BE_IMAGE_TAG ./api
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u lavanyayarlagadda24 --password-stdin
           docker push $BE_IMAGE_TAG
-
       - name: Deploy Backend
         run: |
           kubectl apply -f k8s/be-configmap.yml
           sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yml > temp-be.yml
           kubectl apply -f temp-be.yml
           kubectl apply -f k8s/be-service.yml
-
       - name: Wait for Backend LoadBalancer
         id: get-be-url
         run: |
@@ -76,11 +67,9 @@ jobs:
             echo "📝 Describing pod: $pod"
             kubectl describe pod $pod
           done
-
       - name: Update Frontend .env with Backend URL
         run: |
-          echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.env
-
+          echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.en
       - name: Build & Push Frontend Image
         run: |
           docker build -t $FE_IMAGE_TAG ./frontend
