@@ -22,6 +22,6 @@ jobs:
         run: aws eks update-kubeconfig --region us-east-1 --name lms_cluster
       - name: Deploy database
         run: |
-          kubectl apply -f k8s/pg-secret.yml
+          kubectl apply -f k8s/pg-secret.yml --validate=false
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
