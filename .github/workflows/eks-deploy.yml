@@ -1,58 +1,97 @@
 name: eks deploy
+
 on:
-  push
+  push:
+    branches: [ main ]
+
 jobs:
   eks-deploy:
+    runs-on: ubuntu-latest
     environment:
       name: production
-    runs-on: ubuntu-latest
+
     steps:
-      - name: 📦 Notification
-        run: echo "EKS deployment process started"
-      - name: 📥 Checkout Code
+      - name: Notify start
+        run: echo "🚀 Starting EKS deployment..."
+
+      - name: Checkout Code
         uses: actions/checkout@v3
-      - name: 🏷️ Set Image Tags
+
+      - name: Set Image Tags
         run: |
           echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "FE_IMAGE_TAG=lavanyayarlagadda24/frontend:${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "BE_IMAGE_TAG=lavanyayarlagadda24/api:${GITHUB_SHA::7}" >> $GITHUB_ENV
-      - name: Install AWS CLI
+
+      - name: Install AWS CLI and kubectl
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip curl
+          sudo apt-get update && sudo apt-get install -y unzip curl
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install --update
-          aws --version
-      - name: 🛠️ Install kubectl
-        run: |
-          curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/linux/amd64/kubectl
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
+          unzip awscliv2.zip && sudo ./aws/install --update
+          curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl && sudo mv kubectl /usr/local/bin/
           kubectl version --client
-      - name: 🔐 Configure AWS CLI
+
+      - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ${{ secrets.AWS_REGION }}
-      - name: 🔗 Connect to EKS Cluster
-        run: aws eks update-kubeconfig --name lms_cluster
-      - name: 🛢️ Database Setup
+
+      - name: Connect to EKS Cluster
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Database Setup
         run: |
           kubectl apply -f k8s/pg-secret.yml
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
-      - name: 🧠 Backend Setup
+
+      - name: Build & Push Backend Image
+        run: |
+          docker build -t $BE_IMAGE_TAG ./backend
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u lavanyayarlagadda24 --password-stdin
+          docker push $BE_IMAGE_TAG
+
+      - name: Deploy Backend
         run: |
           kubectl apply -f k8s/be-configmap.yml
-          sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yml > temp-be-deployment.yml
-          kubectl apply -f temp-be-deployment.yml
+          sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yaml > temp-be.yml
+          kubectl apply -f temp-be.yml
           kubectl apply -f k8s/be-service.yml
-      - name: 🎨 Frontend Setup
-        run: |
-          sed "s|lavanyayarlagadda24/frontend:latest|$FE_IMAGE_TAG|g" k8s/fe-deployment.yml > temp-fe-deployment.yml
-          kubectl apply -f temp-fe-deployment.yml
-          kubectl apply -f k8s/fe-service.yml
-      - name: ✅ Feedback
-        run: echo "✅ All services and deployments have been applied!"
 
+      - name: Wait for Backend LoadBalancer
+        id: get-be-url
+        run: |
+          for i in {1..30}; do
+            BE_URL=$(kubectl get svc be-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [ "$BE_URL" != "" ]; then
+              echo "✅ Found backend URL: http://$BE_URL"
+              echo "BACKEND_URL=http://$BE_URL" >> $GITHUB_ENV
+              break
+            fi
+            echo "⏳ Waiting for backend LoadBalancer..."
+            sleep 10
+          done
+
+      - name: Update Frontend .env with Backend URL
+        run: |
+          echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.env
+
+      - name: Build & Push Frontend Image
+        run: |
+          docker build -t $FE_IMAGE_TAG ./frontend
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u lavanyayarlagadda24 --password-stdin
+          docker push $FE_IMAGE_TAG
+
+      - name: Deploy Frontend
+        run: |
+          sed "s|lavanyayarlagadda24/frontend:latest|$FE_IMAGE_TAG|g" k8s/fe-deployment.yml > temp-fe.yml
+          kubectl apply -f temp-fe.yml
+          kubectl apply -f k8s/fe-service.yml
+      - name: Get Pods
+        run: kubectl get pods -o wide
+
+
+      - name: Finish
+        run: echo "✅ Deployment complete. Check LoadBalancer URL for frontend."
