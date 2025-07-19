@@ -3,7 +3,7 @@ on:
   workflow_dispatch
 jobs:
   notify-start:
-    runs-on: self-hosted
+    runs-on: ubuntu
     steps:
       - name: Slack Notification - Start
         uses: slackapi/slack-github-action@v2.1.0
