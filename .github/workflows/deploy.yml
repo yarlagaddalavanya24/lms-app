@@ -1,28 +1,22 @@
 name: eks deploy
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   eks-deploy:
     runs-on: ubuntu-latest
     environment:
       name: production
-
     steps:
       - name: Notify start
         run: echo "🚀 Starting EKS deployment..."
-
       - name: Checkout Code
         uses: actions/checkout@v3
-
       - name: Set Image Tags (optional)
         run: |
           echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "FE_IMAGE_TAG=lavanyayarlagadda24/frontend:${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "BE_IMAGE_TAG=lavanyayarlagadda24/api:${GITHUB_SHA::7}" >> $GITHUB_ENV
-
       # ✅ Correct AWS credentials configuration
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -40,9 +34,6 @@ jobs:
 
       - name: Update kubeconfig to connect to EKS
         run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
-
-      - name: Verify EKS access
-        run: kubectl get nodes
 
       - name: Deploy Database (PostgreSQL)
         run: |
