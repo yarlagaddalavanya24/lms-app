@@ -16,15 +16,17 @@ jobs:
           echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "FE_IMAGE_TAG=lavanyayarlagadda24/frontend:${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "BE_IMAGE_TAG=lavanyayarlagadda24/api:${GITHUB_SHA::7}" >> $GITHUB_ENV
-
-      - name: 🛠️ Install AWS CLI & kubectl
+      - name: Install AWS CLI
         run: |
-          sudo apt install unzip
+          sudo apt-get update
+          sudo apt-get install -y unzip curl
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
           unzip awscliv2.zip
-          sudo ./aws/install 
-          /usr/local/bin/aws --version
+          sudo ./aws/install --update
           aws --version
+
+      - name: 🛠️ Install kubectl
+        run: |
           curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/linux/amd64/kubectl
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/
