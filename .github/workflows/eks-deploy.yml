@@ -84,6 +84,15 @@ jobs:
           done
       - name: List all Pods in default namespace
         run: kubectl get pods -o wide
+      - name: Debug Pending Pods
+        run: |
+          echo "🔍 Describing all pending pods..."
+          for pod in $(kubectl get pods --field-selector=status.phase=Pending -o jsonpath="{.items[*].metadata.name}"); do
+            echo "-----------------------------"
+            echo "📝 Describing pod: $pod"
+            kubectl describe pod $pod
+          done
+
       - name: Update Frontend .env with Backend URL
         run: |
           echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.env
