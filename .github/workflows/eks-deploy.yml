@@ -39,20 +39,20 @@ jobs:
         run: aws eks update-kubeconfig --name lms_cluster
       - name: 🛢️ Database Setup
         run: |
-          kubectl apply -f k8s/pg-secret.yaml
-          kubectl apply -f k8s/pg-deployment.yaml
-          kubectl apply -f k8s/pg-service.yaml
+          kubectl apply -f k8s/pg-secret.yml
+          kubectl apply -f k8s/pg-deployment.yml
+          kubectl apply -f k8s/pg-service.yml
       - name: 🧠 Backend Setup
         run: |
-          kubectl apply -f k8s/be-configmap.yaml
-          sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yaml > temp-be-deployment.yaml
-          kubectl apply -f temp-be-deployment.yaml
-          kubectl apply -f k8s/be-service.yaml
+          kubectl apply -f k8s/be-configmap.yml
+          sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yml > temp-be-deployment.yml
+          kubectl apply -f temp-be-deployment.yml
+          kubectl apply -f k8s/be-service.yml
       - name: 🎨 Frontend Setup
         run: |
-          sed "s|lavanyayarlagadda24/frontend:latest|$FE_IMAGE_TAG|g" k8s/fe-deployment.yaml > temp-fe-deployment.yaml
-          kubectl apply -f temp-fe-deployment.yaml
-          kubectl apply -f k8s/fe-service.yaml
+          sed "s|lavanyayarlagadda24/frontend:latest|$FE_IMAGE_TAG|g" k8s/fe-deployment.yml > temp-fe-deployment.yml
+          kubectl apply -f temp-fe-deployment.yml
+          kubectl apply -f k8s/fe-service.yml
       - name: ✅ Feedback
         run: echo "✅ All services and deployments have been applied!"
 
