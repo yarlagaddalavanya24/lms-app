@@ -16,7 +16,7 @@ on:
 
 jobs:
   frontend:
-    runs-on: self-hosted
+    runs-on: ubuntu
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
