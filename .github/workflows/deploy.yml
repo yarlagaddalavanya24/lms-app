@@ -1,0 +1,78 @@
+name: deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  eks-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+
+    steps:
+      - name: 🚀 Notify Start
+        run: echo "Starting EKS deployment..."
+
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: ☁️ Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🧠 Update kubeconfig for EKS
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: 🔍 Verify EKS Access
+        run: kubectl get nodes
+
+      - name: 📦 Deploy Database (PostgreSQL)
+        run: |
+          kubectl apply -f k8s/pg-secret.yml
+          kubectl apply -f k8s/pg-deployment.yml
+          kubectl apply -f k8s/pg-service.yml
+
+      - name: 🚀 Deploy Backend
+        run: |
+          kubectl apply -f k8s/be-configmap.yml
+          kubectl apply -f k8s/be-deployment.yml
+          kubectl apply -f k8s/be-service.yml
+
+      - name: 🌐 Wait for Backend LoadBalancer
+        id: get-be-url
+        run: |
+          for i in {1..30}; do
+            BE_URL=$(kubectl get svc be-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+            if [ "$BE_URL" != "" ]; then
+              echo "✅ Found backend URL: http://$BE_URL"
+              echo "BACKEND_URL=http://$BE_URL" >> $GITHUB_ENV
+              break
+            fi
+            echo "⏳ Waiting for backend LoadBalancer... ($i/30)"
+            sleep 10
+          done
+          if [ -z "$BE_URL" ]; then
+            echo "❌ Backend LoadBalancer not ready after timeout"
+            exit 1
+          fi
+
+      - name: 🧪 Update Frontend .env
+        run: |
+          echo "REACT_APP_BACKEND_URL=$BACKEND_URL" > frontend/.env
+
+      - name: 🚀 Deploy Frontend
+        run: |
+          kubectl apply -f k8s/fe-deployment.yml
+          kubectl apply -f k8s/fe-service.yml
+
+      - name: 🧹 List Pods and Clean Up
+        run: |
+          kubectl get pods -o wide
+          kubectl get svc -o wide
+
+      - name: ✅ Finish
+        run: echo "✅ EKS deployment complete!"
