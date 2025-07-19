@@ -48,13 +48,11 @@ jobs:
           sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yaml > temp-be-deployment.yaml
           kubectl apply -f temp-be-deployment.yaml
           kubectl apply -f k8s/be-service.yaml
-
       - name: 🎨 Frontend Setup
         run: |
           sed "s|lavanyayarlagadda24/frontend:latest|$FE_IMAGE_TAG|g" k8s/fe-deployment.yaml > temp-fe-deployment.yaml
           kubectl apply -f temp-fe-deployment.yaml
           kubectl apply -f k8s/fe-service.yaml
-
       - name: ✅ Feedback
         run: echo "✅ All services and deployments have been applied!"
 
