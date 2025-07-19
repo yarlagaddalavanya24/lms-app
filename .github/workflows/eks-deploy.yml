@@ -65,7 +65,7 @@ jobs:
       - name: Deploy Backend
         run: |
           kubectl apply -f k8s/be-configmap.yml
-          sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yaml > temp-be.yml
+          sed "s|lavanyayarlagadda24/api:latest|$BE_IMAGE_TAG|g" k8s/be-deployment.yml > temp-be.yml
           kubectl apply -f temp-be.yml
           kubectl apply -f k8s/be-service.yml
 
