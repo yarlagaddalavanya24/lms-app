@@ -35,11 +35,11 @@ jobs:
 
       - name: Install kubectl
         run: |
-          curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.29.1/2024-06-05/bin/linux/arm64/kubectl
+         curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.29.1/2024-06-05/bin/linux/amd64/kubectl
+         chmod +x kubectl
+         sudo mv kubectl /usr/local/bin/
+         kubectl version --client
 
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-          kubectl version --client
 
       - name: Configure AWS CLI
         run: |
