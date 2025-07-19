@@ -1,7 +1,6 @@
 name: eks deploy
 on:
   push
-
 jobs:
   eks-deploy:
     environment:
