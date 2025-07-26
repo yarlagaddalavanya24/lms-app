@@ -1,9 +1,9 @@
 name: Deploy LMS (All Services)
 on:
-  push
+  workflow_dispatch
 jobs:
   notify-start:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Slack Notification - Start
         uses: slackapi/slack-github-action@v2.1.0
@@ -15,16 +15,13 @@ jobs:
               "text": "GitHub Actions workflow for LMS EKS deployment has started.",
               "channel": "all-project"
             }
-
   call-database-workflow:
-    needs: notify-start
     uses: ./.github/workflows/database.yml
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   backend:
-    needs: call-database-workflow
     uses: ./.github/workflows/backend.yml
     with:
       DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
@@ -67,15 +64,12 @@ jobs:
           echo "Pod name: $POD_NAME"
           echo "frontend pod logs:"
           kubectl logs $POD_NAME
-
       - name: Run kubectl get svc
         run: kubectl get svc -A
       - name: Describe frontend pod
         run: |
           POD_NAME=$(kubectl get pods -l app=lms-fe -o jsonpath="{.items[0].metadata.name}")
           kubectl describe pod $POD_NAME
-
-
       - name: Wait for Frontend LoadBalancer to be ready
         run: |
           echo "Waiting for Frontend LoadBalancer to be ready..."
@@ -88,7 +82,6 @@ jobs:
             echo "Waiting for LoadBalancer to be assigned... ($i)"
             sleep 15
           done
-
   notify-success:
     if: ${{ success() }}
     needs: get-loadbalancer-urls
@@ -104,7 +97,6 @@ jobs:
               "text": "LMS Deployment completed successfully!",
               "channel": "all-project"
             }
-
   notify-failure:
     if: ${{ failure() }}
     needs: [call-database-workflow, backend, frontend]
@@ -120,4 +112,3 @@ jobs:
               "text": "LMS Deployment failed. Please check logs.",
               "channel": "all-project"
             }
-
