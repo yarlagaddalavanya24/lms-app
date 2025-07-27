@@ -45,7 +45,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Connect to EKS Cluster
-        run: aws eks update-kubeconfig --region us-east-1 --name lms-cluster
+        run: aws eks update-kubeconfig --region us-east-1 --name lms_cluster
 
       - name: Apply Database Resources
         run: |
