@@ -3,55 +3,50 @@ name: eks-deployment
 on:
   workflow_dispatch:
 
-jobs:
-  notify-start:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Slack Notification - Start
-        uses: slackapi/slack-github-action@v2.1.0
+   - name: Build Backend Image
+        run: |
+          cd api
+          docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest .
+      - name: Build Frontend Image
+        run: |
+          cd webapp
+          docker build -t ${{ vars.DOCKER_USERNAME }}/webapp:latest .
+      - name: Docker Login
+        uses: docker/login-action@v3.4.0
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "Starting LMS EKS Deployment...",
-              "channel": "all-project"
-            }
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-  postgres:
-    uses: ./.github/workflows/pg-deploy.yml
-    needs: notify-start
-
-  backend:
-    uses: ./.github/workflows/be-deploy.yml
-    needs: postgres
-
-  frontend:
-    uses: ./.github/workflows/fe-deploy.yml
-    needs: backend
-
-  notify-success:
-    if: success()
-    runs-on: ubuntu-latest
-    needs: [frontend]
-    steps:
+      - name: Push Docker Images
+        run: |
+          docker push ${{ vars.DOCKER_USERNAME }}/api:latest
+          docker push ${{ vars.DOCKER_USERNAME }}/webapp:latest
+      - name: Backend Deployment
+        run: |
+          kubectl apply -f .github/workflows/k8s/be-configmap.yml
+          kubectl apply -f .github/workflows/k8s/be-deployment.yml
+          kubectl apply -f .github/workflows/k8s/be-service.yml
+     
+      - name: Frontend Deployment
+        run: |
+          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
+          kubectl apply -f .github/workflows/k8s/fe-service.yml
       - name: Slack Notification - Success
+        if: success()
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_USERNAME: GitHub Actions
           SLACK_COLOR: good
-          SLACK_TITLE: " LMS Deployment Successful"
-          SLACK_MESSAGE: "All components deployed successfully."
+          SLACK_TITLE: "LMS Deployment Successful"
+          SLACK_MESSAGE: "All pods and services are deployed and running."
 
-  notify-failure:
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
       - name: Slack Notification - Failure
+        if: failure()
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_USERNAME: GitHub Actions
           SLACK_COLOR: danger
-          SLACK_TITLE: " LMS Deployment Failed"
-          SLACK_MESSAGE: "Deployment failed. Please check logs."
+          SLACK_TITLE: "LMS Deployment Failed"
+          SLACK_MESSAGE: "An error occurred during deployment. Please check the logs."
