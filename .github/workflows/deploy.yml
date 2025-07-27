@@ -1,6 +1,6 @@
 name: eks deploy
 on:
-  push:
+  workflow_dispatch:
     branches: [ main ]
 jobs:
   eks-deploy:
