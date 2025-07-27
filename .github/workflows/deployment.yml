@@ -49,8 +49,7 @@ jobs:
 
       - name: Apply Database Resources
         run: |
-          kubectl apply -f k8s/pg-secret.yml --validate=false
-
+          kubectl apply -f k8s/pg-secret.yml 
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
    
