@@ -60,4 +60,13 @@ jobs:
           kubectl apply -f k8s/be-configmap.yml --validate=false
           kubectl apply -f k8s/be-deployment.yml
           kubectl apply -f k8s/be-service.yml
+      - name: Build Frontend Image
+        run: |
+          cd webapp
+          docker build -t ${{ vars.DOCKER_USERNAME }}/webapp:latest .
+          
+      - name: Frontend Deployment
+        run: |
+          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
+          kubectl apply -f .github/workflows/k8s/fe-service.yml
    
