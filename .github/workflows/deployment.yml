@@ -50,6 +50,9 @@ jobs:
           kubectl apply -f k8s/pg-secret.yml --validate=false
           kubectl apply -f k8s/pg-deployment.yml
           kubectl apply -f k8s/pg-service.yml
+  docker:
+    runs-on: ubuntu-latest
+    steps:
       - name: Build Backend Image
         run: |
           cd api
