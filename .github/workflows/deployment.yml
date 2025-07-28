@@ -52,7 +52,10 @@ jobs:
           kubectl apply -f k8s/pg-service.yml
   docker:
     runs-on: ubuntu-latest
-    steps:
+    needs: deployment
+    steps: 
+      - name: Checkout Code
+        uses: actions/checkout@v4
       - name: Build Backend Image
         run: |
           cd api
