@@ -63,10 +63,10 @@ jobs:
       - name: Build Frontend Image
         run: |
           cd webapp
-          docker build -t ${{ vars.DOCKER_USERNAME }}/webapp:latest .
+          docker build -t lavanyayarlagadda24/webapp:latest .
           
       - name: Frontend Deployment
         run: |
-          kubectl apply -f .github/workflows/k8s/fe-deployment.yml
-          kubectl apply -f .github/workflows/k8s/fe-service.yml
+          kubectl apply -f k8s/fe-deployment.yml
+          kubectl apply -f k8s/fe-service.yml
    
