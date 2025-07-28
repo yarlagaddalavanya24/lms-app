@@ -53,7 +53,7 @@ jobs:
       - name: Build Backend Image
         run: |
           cd api
-          sudo docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest .
+          sudo docker build -t lavanyayarlagadda24/api:latest .
    
       - name: Docker Login
         uses: docker/login-action@v3.4.0
@@ -63,7 +63,7 @@ jobs:
 
       - name: Push Docker Images
         run: |
-          sudo docker push ${{ vars.DOCKER_USERNAME }}/api:latest
+          sudo docker push lavanyayarlagadda24/api:latest
         
       - name: Backend Deployment
         run: |
