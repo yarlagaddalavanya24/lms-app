@@ -63,7 +63,7 @@ jobs:
 
       - name: Push Docker Images
         run: |
-          docker push lavanyayarlagadda24/api:latest
+          sudo docker push lavanyayarlagadda24/api:latest
         
       - name: Backend Deployment
         run: |
