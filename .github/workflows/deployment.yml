@@ -27,7 +27,7 @@ jobs:
           sudo ./aws/install --update
       - name: Install kubectl
         run: |
-          curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/darwin/amd64/kubectl
+          curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/linux/arm64/kubectl
           chmod +x ./kubectl
           sudo mv ./kubectl /usr/local/bin/
       - name: Install Docker
