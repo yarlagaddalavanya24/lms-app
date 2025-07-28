@@ -63,7 +63,7 @@ jobs:
       - name: Build Frontend Image
         run: |
           cd webapp
-          docker build -t lavanyayarlagadda24/webapp:latest .
+          sudo docker build -t lavanyayarlagadda24/webapp:latest .
           
       - name: Frontend Deployment
         run: |
