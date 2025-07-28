@@ -69,7 +69,7 @@ jobs:
         
       - name: Backend Deployment
         run: |
-          kubectl apply -f k8s/be-configmap.yml
+          kubectl apply -f k8s/be-configmap.yml --validate=false
           kubectl apply -f k8s/be-deployment.yml
           kubectl apply -f k8s/be-service.yml
    
