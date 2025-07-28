@@ -53,11 +53,8 @@ jobs:
       - name: Build Backend Image
         run: |
           cd api
-          docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest .
-      - name: Build Frontend Image
-        run: |
-          cd webapp
-          docker build -t ${{ vars.DOCKER_USERNAME }}/webapp:latest .
+          sudo docker build -t ${{ vars.DOCKER_USERNAME }}/api:latest .
+   
       - name: Docker Login
         uses: docker/login-action@v3.4.0
         with:
